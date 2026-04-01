@@ -1,0 +1,11 @@
+// បន្ថែមការចុះឈ្មោះ Service Worker ឱ្យ App ដើរ Offline
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker បានចុះឈ្មោះជោគជ័យ!'))
+            .catch(err => console.log('ការចុះឈ្មោះបរាជ័យ: ', err));
+    });
+}
+
+// បន្ថែមការភ្ជាប់ទៅកាន់ manifest.json ក្នុងផ្នែក <head> (ដាក់ខាងលើគេក្នុង HTML)
+// <link rel="manifest" href="manifest.json">
