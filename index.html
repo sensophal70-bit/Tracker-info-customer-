@@ -3,142 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>កម្មវិធីកត់ត្រាវាលកម្រិតខ្ពស់</title>
-    <link rel="manifest" href="manifest.json">
+    <title>ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យវាល</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
-        body { font-family: 'Kantumruy Pro', sans-serif; display: flex; flex-direction: column; align-items: center; background: #eef2f3; padding: 15px; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        video, #preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid #ddd; }
+        body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f8; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 30px; }
+        video, #preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; }
         #preview { display: none; }
-        .info-box { background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 0.9rem; line-height: 1.6; }
-        .info-box div { margin-bottom: 5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
-        strong { color: #007bff; }
+        .info-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 0.9rem; border: 1px solid #ddd; }
         input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Kantumruy Pro'; }
-        .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.3s; }
-        .btn-capture { background: #007bff; color: white; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; margin-bottom: 10px; }
+        .btn-cap { background: #007bff; color: white; }
         .btn-save { background: #28a745; color: white; }
         .btn-refresh { background: #f39c12; color: white; }
-        button:disabled { background: #ccc; }
+        
+        /* តារាងបង្ហាញទិន្នន័យ */
+        .table-container { width: 100%; max-width: 900px; overflow-x: auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #007bff; color: white; }
+        img.thumb { width: 50px; height: 40px; border-radius: 4px; object-fit: cover; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="text-align:center; margin-top:0;">កត់ត្រាទិន្នន័យចុះវាល</h2>
-    
+    <h2 style="text-align:center; color:#333;">កត់ត្រាទិន្នន័យចុះវាល</h2>
     <video id="webcam" autoplay playsinline></video>
     <img id="preview">
 
     <div class="info-box">
         <input type="text" id="customerName" placeholder="បញ្ចូលឈ្មោះអតិថិជន...">
-        <div><strong>លេខរៀង:</strong> <span id="recordNo">1</span></div>
+        <div><strong>លេខរៀង:</strong> <span id="recordNo">--</span></div>
         <div><strong>កាលបរិច្ឆេទ:</strong> <span id="dateTime">--</span></div>
-        <div><strong>ឈ្មោះតំបន់:</strong> <span id="addressText">កំពុងស្វែងរក...</span></div>
-        <div><strong>ទីតាំង GPS:</strong> <span id="location">--</span></div>
+        <div><strong>តំបន់:</strong> <span id="addressText">កំពុងស្វែងរក...</span></div>
+        <div><strong>GPS:</strong> <span id="location">--</span></div>
     </div>
     
-    <div class="btn-group">
-        <button id="capBtn" class="btn-capture" onclick="takeSnapshot()">ថតរូប និងចាប់ទិន្នន័យ</button>
-        <button id="saveBtn" class="btn-save" onclick="saveData()" disabled>រក្សាទុក (Image + Text)</button>
-        <button class="btn-refresh" onclick="window.location.reload()">Refresh / ចាប់ផ្ដើមថ្មី</button>
-    </div>
+    <button class="btn-cap" onclick="takeSnapshot()">ថតរូប</button>
+    <button id="saveBtn" class="btn-save" onclick="saveToDatabase()" disabled>រក្សាទុកក្នុង Database</button>
+    <button class="btn-refresh" onclick="window.location.reload()">Refresh</button>
+</div>
+
+<div class="table-container">
+    <h3 style="margin-top:0;">បញ្ជីទិន្នន័យដែលបានរក្សាទុក (អក្សរខ្មែរ)</h3>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>ល.រ</th>
+                <th>កាលបរិច្ឆេទ</th>
+                <th>ឈ្មោះ</th>
+                <th>តំបន់</th>
+                <th>GPS</th>
+                <th>រូបភាព</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
 
 <script>
+    let db;
     const video = document.getElementById('webcam');
     const preview = document.getElementById('preview');
     const canvas = document.getElementById('hiddenCanvas');
-    const dateTimeEl = document.getElementById('dateTime');
-    const locationEl = document.getElementById('location');
-    const addressEl = document.getElementById('addressText');
-    const recordNoEl = document.getElementById('recordNo');
     const saveBtn = document.getElementById('saveBtn');
+    
+    let capturedImg = null;
+    let currentAddress = "កំពុងស្វែងរក...";
+    let currentGPS = "--";
 
-    let currentLat, currentLon;
-    let recordCount = localStorage.getItem('lastID') ? parseInt(localStorage.getItem('lastID')) + 1 : 1;
-    recordNoEl.textContent = recordCount;
+    // ១. បង្កើត Database (IndexedDB)
+    const request = indexedDB.open("FieldDataDB", 1);
+    request.onupgradeneeded = e => {
+        db = e.target.result;
+        db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = e => {
+        db = e.target.result;
+        displayData(); // បង្ហាញទិន្នន័យពេលបើក App
+        updateNextID();
+    };
 
-    // ១. បើកកាមេរ៉ា
-    async function initCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-        } catch (err) { alert("សូម Allow កាមេរ៉ា!"); }
-    }
+    // ២. បើកកាមេរ៉ា និង GPS
+    async function init() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        
+        setInterval(() => { document.getElementById('dateTime').textContent = new Date().toLocaleString('km-KH'); }, 1000);
 
-    // ២. ម៉ោង និង GPS + បម្លែងជាឈ្មោះតំបន់ (Reverse Geocoding)
-    setInterval(() => { dateTimeEl.textContent = new Date().toLocaleString('km-KH'); }, 1000);
-
-    if (navigator.geolocation) {
         navigator.geolocation.watchPosition(async pos => {
-            currentLat = pos.coords.latitude;
-            currentLon = pos.coords.longitude;
-            locationEl.textContent = `${currentLat.toFixed(6)}, ${currentLon.toFixed(6)}`;
-
-            // ហៅ API ដើម្បីយកឈ្មោះតំបន់ (Address)
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLon}&accept-language=km`);
-                const data = await res.json();
-                addressEl.textContent = data.display_name || "មិនស្គាល់តំបន់";
-            } catch (e) { addressEl.textContent = "មិនអាចទាញយកឈ្មោះតំបន់"; }
-        }, null, { enableHighAccuracy: true });
+            currentGPS = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+            document.getElementById('location').textContent = currentGPS;
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&accept-language=km`);
+            const data = await res.json();
+            currentAddress = data.display_name || "មិនស្គាល់តំបន់";
+            document.getElementById('addressText').textContent = currentAddress;
+        });
     }
 
-    // ៣. មុខងារថតរូប
+    // ៣. ថតរូប
     function takeSnapshot() {
-        if (!document.getElementById('customerName').value) {
-            alert("សូមបញ្ចូលឈ្មោះជាមុនសិន!");
-            return;
-        }
+        if(!document.getElementById('customerName').value) return alert("សូមបញ្ចូលឈ្មោះ!");
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        preview.src = canvas.toDataURL('image/jpeg');
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        capturedImg = canvas.toDataURL('image/jpeg');
+        preview.src = capturedImg;
         preview.style.display = 'block';
         video.style.display = 'none';
         saveBtn.disabled = false;
     }
 
-    // ៤. រក្សាទុកជា File
-    function saveData() {
-        const name = document.getElementById('customerName').value;
-        const fileName = `ID${recordCount}_${name}`;
-
-        // ទាញយករូបភាព
-        const imgLink = document.createElement('a');
-        imgLink.download = `${fileName}.jpg`;
-        imgLink.href = preview.src;
-        imgLink.click();
-
-        // ទាញយក File អត្ថបទ
-        const textContent = `ព័ត៌មានការចុះវាល\n` +
-                            `--------------------------\n` +
-                            `លេខរៀង: ${recordCount}\n` +
-                            `កាលបរិច្ឆេទ: ${dateTimeEl.textContent}\n` +
-                            `ឈ្មោះអតិថិជន: ${name}\n` +
-                            `ឈ្មោះតំបន់: ${addressEl.textContent}\n` +
-                            `ទីតាំង GPS: ${locationEl.textContent}\n` +
-                            `--------------------------`;
-        
-        const blob = new Blob([textContent], { type: 'text/plain' });
-        const textLink = document.createElement('a');
-        textLink.download = `${fileName}.txt`;
-        textLink.href = URL.createObjectURL(blob);
-        textLink.click();
-
-        // រក្សាទុកលេខរៀងចូល LocalStorage
-        localStorage.setItem('lastID', recordCount);
-        alert("រក្សាទុកបានជោគជ័យ!");
-        window.location.reload();
+    // ៤. រក្សាទុកក្នុង Database
+    function saveToDatabase() {
+        const transaction = db.transaction(["records"], "readwrite");
+        const store = transaction.objectStore("records");
+        const data = {
+            name: document.getElementById('customerName').value,
+            date: document.getElementById('dateTime').textContent,
+            address: currentAddress,
+            gps: currentGPS,
+            image: capturedImg
+        };
+        store.add(data);
+        transaction.oncomplete = () => {
+            alert("រក្សាទុកក្នុង Database រួចរាល់!");
+            window.location.reload();
+        };
     }
 
-    initCamera();
+    // ៥. បង្ហាញទិន្នន័យក្នុងតារាង
+    function displayData() {
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = "";
+        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
+            e.target.result.forEach(row => {
+                const tr = `<tr>
+                    <td>${row.id}</td>
+                    <td>${row.date}</td>
+                    <td>${row.name}</td>
+                    <td style="max-width:200px;">${row.address}</td>
+                    <td>${row.gps}</td>
+                    <td><img src="${row.image}" class="thumb"></td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
+        };
+    }
+
+    function updateNextID() {
+        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
+            document.getElementById('recordNo').textContent = e.target.result.length + 1;
+        };
+    }
+
+    init();
 </script>
 </body>
 </html>
