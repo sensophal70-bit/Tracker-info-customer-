@@ -3,58 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យវាល</title>
+    <title>ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យអតិថិជន</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
-        body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f8; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 30px; }
-        video, #preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; }
+        
+        body { 
+            font-family: 'Kantumruy Pro', sans-serif; 
+            background: #f4f7f9; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
+
+        .card { 
+            background: white; padding: 20px; border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; 
+            margin-bottom: 25px;
+        }
+
+        video, #preview { 
+            width: 100%; border-radius: 10px; background: #000; 
+            aspect-ratio: 4/3; object-fit: cover; border: 2px solid #eee;
+        }
+
         #preview { display: none; }
-        .info-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 0.9rem; border: 1px solid #ddd; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Kantumruy Pro'; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; margin-bottom: 10px; }
+
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        
+        input { 
+            width: 100%; padding: 12px; border: 1px solid #ccc; 
+            border-radius: 8px; box-sizing: border-box; font-family: 'Kantumruy Pro';
+        }
+
+        .info-display { 
+            background: #f9f9f9; padding: 12px; border-radius: 8px; 
+            font-size: 0.85rem; border-left: 4px solid #007bff; margin-bottom: 15px;
+        }
+
+        button { 
+            width: 100%; padding: 13px; border: none; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; 
+            margin-bottom: 10px; transition: 0.3s;
+        }
+
         .btn-cap { background: #007bff; color: white; }
         .btn-save { background: #28a745; color: white; }
-        .btn-refresh { background: #f39c12; color: white; }
-        
-        /* តារាងបង្ហាញទិន្នន័យ */
-        .table-container { width: 100%; max-width: 900px; overflow-x: auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .btn-refresh { background: #6c757d; color: white; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* តារាងទិន្នន័យ */
+        .table-section { width: 100%; max-width: 900px; background: white; padding: 15px; border-radius: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
         th { background: #007bff; color: white; }
-        img.thumb { width: 50px; height: 40px; border-radius: 4px; object-fit: cover; }
+        .maps-link { color: #d9534f; font-weight: bold; text-decoration: none; }
+        .maps-link:hover { text-decoration: underline; }
+        .img-table { width: 60px; height: 45px; border-radius: 4px; object-fit: cover; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="text-align:center; color:#333;">កត់ត្រាទិន្នន័យចុះវាល</h2>
+    <h2 style="text-align:center; color:#007bff; margin-top:0;">ចុះឈ្មោះអតិថិជនថ្មី</h2>
+    
     <video id="webcam" autoplay playsinline></video>
     <img id="preview">
 
-    <div class="info-box">
-        <input type="text" id="customerName" placeholder="បញ្ចូលឈ្មោះអតិថិជន...">
-        <div><strong>លេខរៀង:</strong> <span id="recordNo">--</span></div>
-        <div><strong>កាលបរិច្ឆេទ:</strong> <span id="dateTime">--</span></div>
-        <div><strong>តំបន់:</strong> <span id="addressText">កំពុងស្វែងរក...</span></div>
-        <div><strong>GPS:</strong> <span id="location">--</span></div>
+    <div class="form-group">
+        <label>ឈ្មោះអតិថិជន:</label>
+        <input type="text" id="custName" placeholder="បញ្ចូលឈ្មោះអតិថិជន...">
+    </div>
+
+    <div class="info-display">
+        <div><strong>លេខកូដ (ID):</strong> <span id="autoID">--</span></div>
+        <div><strong>កាលបរិច្ឆេទ:</strong> <span id="curDate">--</span></div>
+        <div><strong>តំបន់:</strong> <span id="curAddr">កំពុងរក...</span></div>
+        <div><strong>GPS:</strong> <span id="curGPS">--</span></div>
     </div>
     
     <button class="btn-cap" onclick="takeSnapshot()">ថតរូប</button>
-    <button id="saveBtn" class="btn-save" onclick="saveToDatabase()" disabled>រក្សាទុកក្នុង Database</button>
-    <button class="btn-refresh" onclick="window.location.reload()">Refresh</button>
+    <button id="saveBtn" class="btn-save" onclick="saveToDB()" disabled>រក្សាទុកទិន្នន័យ</button>
+    <button class="btn-refresh" onclick="window.location.reload()">ចាប់ផ្ដើមថ្មី</button>
 </div>
 
-<div class="table-container">
-    <h3 style="margin-top:0;">បញ្ជីទិន្នន័យដែលបានរក្សាទុក (អក្សរខ្មែរ)</h3>
-    <table id="dataTable">
+<div class="table-section">
+    <h3>បញ្ជីទិន្នន័យអតិថិជន</h3>
+    <table id="custTable">
         <thead>
             <tr>
-                <th>ល.រ</th>
+                <th>លេខកូដ</th>
+                <th>ឈ្មោះអតិថិជន</th>
                 <th>កាលបរិច្ឆេទ</th>
-                <th>ឈ្មោះ</th>
                 <th>តំបន់</th>
-                <th>GPS</th>
+                <th>ទីតាំង (Google Maps)</th>
                 <th>រូបភាព</th>
             </tr>
         </thead>
@@ -72,41 +112,48 @@
     const saveBtn = document.getElementById('saveBtn');
     
     let capturedImg = null;
-    let currentAddress = "កំពុងស្វែងរក...";
-    let currentGPS = "--";
+    let lat, lon;
 
     // ១. បង្កើត Database (IndexedDB)
-    const request = indexedDB.open("FieldDataDB", 1);
+    const request = indexedDB.open("CustomerDB", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
-        db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
+        db.createObjectStore("customers", { keyPath: "id", autoIncrement: true });
     };
     request.onsuccess = e => {
         db = e.target.result;
-        displayData(); // បង្ហាញទិន្នន័យពេលបើក App
+        loadTable();
         updateNextID();
     };
 
-    // ២. បើកកាមេរ៉ា និង GPS
-    async function init() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-        
-        setInterval(() => { document.getElementById('dateTime').textContent = new Date().toLocaleString('km-KH'); }, 1000);
+    // ២. ដំណើរការ Camera & GPS
+    async function startApp() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+        } catch (e) { alert("សូមបើក Permission កាមេរ៉ា!"); }
+
+        setInterval(() => {
+            document.getElementById('curDate').textContent = new Date().toLocaleString('km-KH');
+        }, 1000);
 
         navigator.geolocation.watchPosition(async pos => {
-            currentGPS = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
-            document.getElementById('location').textContent = currentGPS;
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&accept-language=km`);
-            const data = await res.json();
-            currentAddress = data.display_name || "មិនស្គាល់តំបន់";
-            document.getElementById('addressText').textContent = currentAddress;
-        });
+            lat = pos.coords.latitude;
+            lon = pos.coords.longitude;
+            document.getElementById('curGPS').textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            
+            // ទាញយកឈ្មោះតំបន់
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
+                const data = await res.json();
+                document.getElementById('curAddr').textContent = data.display_name.split(',').slice(0,3).join(',');
+            } catch (err) { document.getElementById('curAddr').textContent = "រកមិនឃើញឈ្មោះតំបន់"; }
+        }, null, { enableHighAccuracy: true });
     }
 
     // ៣. ថតរូប
     function takeSnapshot() {
-        if(!document.getElementById('customerName').value) return alert("សូមបញ្ចូលឈ្មោះ!");
+        if(!document.getElementById('custName').value) return alert("សូមបញ្ចូលឈ្មោះអតិថិជន!");
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
@@ -117,37 +164,38 @@
         saveBtn.disabled = false;
     }
 
-    // ៤. រក្សាទុកក្នុង Database
-    function saveToDatabase() {
-        const transaction = db.transaction(["records"], "readwrite");
-        const store = transaction.objectStore("records");
+    // ៤. រក្សាទុកទិន្នន័យ
+    function saveToDB() {
+        const transaction = db.transaction(["customers"], "readwrite");
+        const store = transaction.objectStore("customers");
         const data = {
-            name: document.getElementById('customerName').value,
-            date: document.getElementById('dateTime').textContent,
-            address: currentAddress,
-            gps: currentGPS,
+            name: document.getElementById('custName').value,
+            date: document.getElementById('curDate').textContent,
+            address: document.getElementById('curAddr').textContent,
+            gps: `${lat},${lon}`,
             image: capturedImg
         };
-        store.add(data);
-        transaction.oncomplete = () => {
-            alert("រក្សាទុកក្នុង Database រួចរាល់!");
+        store.add(data).onsuccess = () => {
+            alert("រក្សាទុកជោគជ័យ!");
             window.location.reload();
         };
     }
 
-    // ៥. បង្ហាញទិន្នន័យក្នុងតារាង
-    function displayData() {
-        const tbody = document.querySelector("#dataTable tbody");
+    // ៥. បង្ហាញក្នុងតារាង
+    function loadTable() {
+        const tbody = document.querySelector("#custTable tbody");
         tbody.innerHTML = "";
-        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            e.target.result.forEach(row => {
+        db.transaction("customers").objectStore("customers").getAll().onsuccess = e => {
+            e.target.result.forEach(item => {
+                // បង្កើត Link ទៅ Google Maps
+                const mapsUrl = `https://www.google.com/maps?q=${item.gps}`;
                 const tr = `<tr>
-                    <td>${row.id}</td>
-                    <td>${row.date}</td>
-                    <td>${row.name}</td>
-                    <td style="max-width:200px;">${row.address}</td>
-                    <td>${row.gps}</td>
-                    <td><img src="${row.image}" class="thumb"></td>
+                    <td>CUST-${item.id.toString().padStart(4, '0')}</td>
+                    <td>${item.name}</td>
+                    <td>${item.date}</td>
+                    <td>${item.address}</td>
+                    <td><a href="${mapsUrl}" target="_blank" class="maps-link">📍 បើកផែនទី</a></td>
+                    <td><img src="${item.image}" class="img-table"></td>
                 </tr>`;
                 tbody.innerHTML += tr;
             });
@@ -155,12 +203,13 @@
     }
 
     function updateNextID() {
-        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            document.getElementById('recordNo').textContent = e.target.result.length + 1;
+        db.transaction("customers").objectStore("customers").getAll().onsuccess = e => {
+            const nextID = e.target.result.length + 1;
+            document.getElementById('autoID').textContent = "CUST-" + nextID.toString().padStart(4, '0');
         };
     }
 
-    init();
+    startApp();
 </script>
 </body>
 </html>
