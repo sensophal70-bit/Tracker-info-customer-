@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធកត់ត្រាស្វ័យប្រវត្តិ</title>
+    <title>ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យវាល - Khmer Support</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
         
@@ -30,57 +30,75 @@
             border-left: 5px solid #28a745;
         }
 
-        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn-row { display: flex; gap: 8px; }
 
         button { 
-            width: 100%; padding: 15px; border: none; border-radius: 8px; 
+            width: 100%; padding: 12px; border: none; border-radius: 8px; 
             cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; 
-            font-size: 1.1rem; transition: 0.2s;
+            transition: 0.2s;
         }
 
-        .btn-main { background: #28a745; color: white; } /* ពណ៌បៃតងសម្រាប់ថត */
-        .btn-close { background: #dc3545; color: white; } /* ពណ៌ក្រហមសម្រាប់បិទ */
+        .btn-main { background: #28a745; color: white; font-size: 1.1rem; padding: 15px; }
+        .btn-refresh { background: #f39c12; color: white; }
+        .btn-close { background: #dc3545; color: white; }
+        .btn-export { background: #17a2b8; color: white; flex: 1; font-size: 0.8rem; }
+        .btn-pdf { background: #6c757d; color: white; flex: 1; font-size: 0.8rem; }
+
         button:active { transform: scale(0.98); opacity: 0.9; }
 
         /* តារាង */
-        .table-section { width: 100%; max-width: 800px; background: white; padding: 10px; border-radius: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        th { background: #343a40; color: white; }
-        .maps-link { color: #007bff; text-decoration: none; font-weight: bold; }
-        .img-thumb { width: 50px; border-radius: 3px; }
+        .table-section { width: 100%; max-width: 900px; background: white; padding: 15px; border-radius: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #007bff; color: white; }
+        .img-thumb { width: 45px; border-radius: 3px; }
+
+        /* សម្រាប់ Print PDF */
+        @media print {
+            body * { visibility: hidden; }
+            #printableArea, #printableArea * { visibility: visible; }
+            #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h3 style="margin-top:0; color:#333;">កត់ត្រាទិន្នន័យស្វ័យប្រវត្តិ</h3>
-    
+<div class="card no-print">
+    <h3 style="margin-top:0;">កត់ត្រាស្វ័យប្រវត្តិ (Khmer)</h3>
     <video id="webcam" autoplay playsinline></video>
 
     <div class="status-box">
-        <div><strong>លេខកូដអតិថិជន:</strong> <span id="autoID" style="color:#007bff; font-weight:bold;">--</span></div>
-        <div><strong>ម៉ោង:</strong> <span id="curDate">--</span></div>
+        <div><strong>ID:</strong> <span id="autoID">--</span></div>
+        <div><strong>ថ្ងៃម៉ោង:</strong> <span id="curDate">--</span></div>
         <div><strong>តំបន់:</strong> <span id="curAddr">កំពុងស្វែងរក...</span></div>
         <div><strong>GPS:</strong> <span id="curGPS">--</span></div>
     </div>
     
     <div class="btn-group">
         <button class="btn-main" onclick="autoCaptureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
-        <button class="btn-close" onclick="closeApp()">✖ បិទកម្មវិធី</button>
+        <div class="btn-row">
+            <button class="btn-refresh" onclick="window.location.reload()">🔄 Refresh</button>
+            <button class="btn-close" onclick="closeApp()">✖ បិទ</button>
+        </div>
     </div>
 </div>
 
-<div class="table-section">
+<div class="table-section" id="printableArea">
     <h4 style="margin:5px 0;">ទិន្នន័យបានរក្សាទុក</h4>
+    <div class="btn-row no-print" style="margin-bottom: 10px;">
+        <button class="btn-export" onclick="exportToExcel()">📊 Export Excel</button>
+        <button class="btn-pdf" onclick="exportToPDF()">📄 Export PDF</button>
+    </div>
     <table id="custTable">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>កាលបរិច្ឆេទ</th>
-                <th>តំបន់</th>
-                <th>Map</th>
-                <th>រូប</th>
+                <th>ថ្ងៃម៉ោង</th>
+                <th>តំបន់ (Address)</th>
+                <th>GPS Link</th>
+                <th>រូបភាព</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -93,10 +111,10 @@
     let db;
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('hiddenCanvas');
-    let lat, lon, currentAddress = "មិនស្គាល់តំបន់";
+    let lat = 0, lon = 0, currentAddress = "កំពុងស្វែងរក...";
 
-    // ១. បង្កើត Database (IndexedDB)
-    const request = indexedDB.open("AutoStoreDB", 1);
+    // ១. បង្កើត Database
+    const request = indexedDB.open("FieldCaptureDB", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
@@ -107,12 +125,12 @@
         updateNextID();
     };
 
-    // ២. ចាប់ផ្ដើម Camera & GPS
+    // ២. ចាប់ផ្ដើម Camera & GPS (Khmer Address)
     async function startApp() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-        } catch (e) { alert("សូមអនុញ្ញាតប្រើកាមេរ៉ា!"); }
+        } catch (e) { alert("សូមបើកកាមេរ៉ា!"); }
 
         setInterval(() => {
             document.getElementById('curDate').textContent = new Date().toLocaleString('km-KH');
@@ -124,23 +142,22 @@
             document.getElementById('curGPS').textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
             
             try {
+                // API នេះផ្ដល់ឈ្មោះតំបន់ជាភាសាខ្មែរ
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
                 const data = await res.json();
-                currentAddress = data.display_name.split(',').slice(0,3).join(',');
+                currentAddress = data.display_name;
                 document.getElementById('curAddr').textContent = currentAddress;
-            } catch (err) { }
+            } catch (err) { currentAddress = "មិនអាចទាញយកឈ្មោះតំបន់"; }
         }, null, { enableHighAccuracy: true });
     }
 
-    // ៣. ថតរូប និងរក្សាទុកភ្លាមៗ (One Click)
+    // ៣. ថតរូប និងរក្សាទុក
     function autoCaptureAndSave() {
-        // ចាប់យករូបភាពក្នុង Canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        const capturedImg = canvas.toDataURL('image/jpeg', 0.7);
+        const capturedImg = canvas.toDataURL('image/jpeg', 0.6);
 
-        // រៀបចំទិន្នន័យ
         const transaction = db.transaction(["records"], "readwrite");
         const store = transaction.objectStore("records");
         const data = {
@@ -150,12 +167,10 @@
             image: capturedImg
         };
 
-        // រក្សាទុកក្នុង DB
         store.add(data).onsuccess = () => {
-            console.log("Saved!");
-            loadTable(); // អាប់ដេតតារាង
-            updateNextID(); // ប្ដូរលេខ ID បន្ទាប់
-            alert("រក្សាទុកជោគជ័យសម្រាប់ ID: " + document.getElementById('autoID').textContent);
+            loadTable();
+            updateNextID();
+            alert("រក្សាទុកជោគជ័យ!");
         };
     }
 
@@ -167,12 +182,11 @@
             const cursor = e.target.result;
             if (cursor) {
                 const item = cursor.value;
-                const mapsUrl = `https://www.google.com/maps?q=${item.gps}`;
                 const tr = `<tr>
                     <td>ID-${item.id.toString().padStart(4, '0')}</td>
                     <td>${item.date}</td>
                     <td>${item.address}</td>
-                    <td><a href="${mapsUrl}" target="_blank" class="maps-link">📍 Map</a></td>
+                    <td><a href="https://maps.google.com/?q=${item.gps}" target="_blank">📍 ផែនទី</a></td>
                     <td><img src="${item.image}" class="img-thumb"></td>
                 </tr>`;
                 tbody.innerHTML += tr;
@@ -183,18 +197,35 @@
 
     function updateNextID() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            const nextID = e.target.result.length + 1;
-            document.getElementById('autoID').textContent = "ID-" + nextID.toString().padStart(4, '0');
+            document.getElementById('autoID').textContent = "ID-" + (e.target.result.length + 1).toString().padStart(4, '0');
         };
     }
 
-    // ៥. ប៊ូតុងបិទ
+    // ៥. Export to Excel (គាំទ្រ Font ខ្មែរ)
+    function exportToExcel() {
+        let csvContent = "\uFEFF"; // UTF-8 BOM សម្រាប់អក្សរខ្មែរ
+        csvContent += "ID,កាលបរិច្ឆេទ,តំបន់,GPS\n";
+
+        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
+            e.target.result.forEach(row => {
+                let addr = row.address.replace(/,/g, " "); // លុបក្បៀសចេញកុំឱ្យច្រឡំ Column
+                csvContent += `ID-${row.id},${row.date},${addr},${row.gps}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "របាយការណ៍_ទិន្នន័យវាល.csv";
+            link.click();
+        };
+    }
+
+    // ៦. Export to PDF (ប្រើ Browser Print)
+    function exportToPDF() {
+        window.print();
+    }
+
     function closeApp() {
-        if (confirm("តើអ្នកចង់បិទកម្មវិធីមែនទេ?")) {
-            window.close();
-            // បើ window.close() មិនដើរ (Security browser) គឺវាធ្វើការ Reload
-            window.location.href = "about:blank";
-        }
+        if (confirm("តើអ្នកចង់បិទកម្មវិធីមែនទេ?")) window.location.href = "about:blank";
     }
 
     startApp();
