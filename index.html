@@ -18,6 +18,7 @@
         .btn-capture { background: #007bff; color: white; }
         .btn-save { background: #28a745; color: white; }
         .btn-reset { background: #6c757d; color: white; }
+        .btn-refresh { background: #f39c12; color: white; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -38,6 +39,7 @@
         <button id="capBtn" class="btn-capture" onclick="takeSnapshot()">ថតរូប និងចាប់ទិន្នន័យ</button>
         <button id="saveBtn" class="btn-save" onclick="saveAllData()" disabled>រក្សាទុកជា File (Image + Text)</button>
         <button id="resetBtn" class="btn-reset" onclick="resetCamera()" style="display:none;">ថតថ្មី</button>
+        <button class="btn-refresh" onclick="refreshApp()">ចាប់ផ្ដើមថ្មី (Refresh)</button>
     </div>
 </div>
 
@@ -55,7 +57,6 @@
 
     let capturedData = { img: null, name: "", time: "", gps: "" };
 
-    // ១. បើកកាមេរ៉ា
     async function initCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -63,7 +64,6 @@
         } catch (err) { alert("សូមអនុញ្ញាតកាមេរ៉ា!"); }
     }
 
-    // ២. ម៉ោង និង GPS
     setInterval(() => { dateTimeEl.textContent = new Date().toLocaleString('km-KH'); }, 1000);
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
@@ -71,7 +71,6 @@
         }, null, { enableHighAccuracy: true });
     }
 
-    // ៣. មុខងារថតរូប និងចាប់យកអត្ថបទ
     function takeSnapshot() {
         const name = document.getElementById('customerName').value;
         if (!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
@@ -81,7 +80,6 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // រក្សាទុកទិន្នន័យក្នុង Object
         capturedData.img = canvas.toDataURL('image/jpeg');
         capturedData.name = name;
         capturedData.time = dateTimeEl.textContent;
@@ -96,17 +94,13 @@
         resetBtn.style.display = 'block';
     }
 
-    // ៤. រក្សាទុកជា File រូបភាព និង File អត្ថបទ (.txt)
     function saveAllData() {
         const fileName = `Customer_${capturedData.name}_${Date.now()}`;
-
-        // រក្សាទុករូបភាព
         const imgLink = document.createElement('a');
         imgLink.download = `${fileName}.jpg`;
         imgLink.href = capturedData.img;
         imgLink.click();
 
-        // បង្កើត និងរក្សាទុក File Text
         const textContent = `ព័ត៌មានអតិថិជន\n` +
                             `--------------------------\n` +
                             `ឈ្មោះ: ${capturedData.name}\n` +
@@ -119,8 +113,6 @@
         textLink.download = `${fileName}.txt`;
         textLink.href = URL.createObjectURL(blob);
         textLink.click();
-
-        alert("បានរក្សាទុក File រូបភាព និង File អត្ថបទ រួចរាល់!");
     }
 
     function resetCamera() {
@@ -129,6 +121,12 @@
         saveBtn.disabled = true;
         capBtn.style.display = 'block';
         resetBtn.style.display = 'none';
+    }
+
+    function refreshApp() {
+        if (confirm("តើអ្នកចង់សម្អាតទិន្នន័យ និងចាប់ផ្ដើមថ្មីមែនទេ?")) {
+            window.location.reload();
+        }
     }
 
     initCamera();
