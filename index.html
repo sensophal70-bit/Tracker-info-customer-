@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធកត់ត្រា និងរបាយការណ៍ PDF</title>
+    <title>Field Capture Pro V3</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -12,193 +12,203 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
         
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #28a745;
-            --danger-color: #dc3545;
-        }
-
         body { 
-            font-family: 'Kantumruy Pro', sans-serif; 
-            background: #f0f2f5; padding: 20px; 
+            font-family: 'Kantumruy Pro', Arial, sans-serif; 
+            background: #f0f4f7; padding: 15px; 
             display: flex; flex-direction: column; align-items: center; 
         }
 
-        /* ផ្នែកបញ្ជា (Control Card) */
+        /* Control Card */
         .card { 
             background: white; padding: 20px; border-radius: 15px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
-            margin-bottom: 30px; text-align: center;
+            margin-bottom: 20px; text-align: center;
         }
-        video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; }
+        video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid #007bff; }
 
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .btn-row { display: flex; gap: 8px; }
+        
         button { 
             padding: 12px; border: none; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.3s;
+            font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s;
         }
-        .btn-save { background: var(--secondary-color); color: white; font-size: 1.1rem; }
-        .btn-pdf { background: #555; color: white; }
-        .btn-excel { background: #1d6f42; color: white; }
+        .btn-save { background: #28a745; color: white; font-size: 1.1rem; }
+        .btn-refresh { background: #f39c12; color: white; flex: 1; }
+        .btn-close { background: #dc3545; color: white; flex: 1; }
+        .btn-excel { background: #1d6f42; color: white; flex: 1; font-size: 0.8rem; }
+        .btn-pdf { background: #ad0b00; color: white; flex: 1; font-size: 0.8rem; }
 
-        /* ស្ទីលតារាងរបាយការណ៍សម្រាប់ PDF */
+        /* Report Area for PDF */
         #reportArea { 
             width: 100%; max-width: 1000px; background: white; 
-            padding: 30px; border-radius: 5px;
+            padding: 20px; border-radius: 5px; margin-top: 10px;
         }
+        .report-header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; }
         
-        .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .report-header h2 { margin: 0; color: #333; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { 
-            border: 1px solid #333; padding: 10px; 
-            text-align: left; word-wrap: break-word; vertical-align: top;
+            border: 1px solid #333; padding: 8px; 
+            text-align: left; word-wrap: break-word; font-size: 12px;
         }
-        th { background-color: #f2f2f2; font-weight: bold; }
-        
-        /* បង្ការការដាច់រូបភាព ឬអក្សរពេលដាច់ទំព័រ PDF */
-        tr { page-break-inside: avoid; page-break-after: auto; }
+        th { background-color: #f2f2f2; }
+        tr { page-break-inside: avoid; }
+        .img-cell { width: 90px; height: 65px; object-fit: cover; border-radius: 3px; }
 
-        .img-cell { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; }
-        .maps-url { font-size: 0.7rem; color: var(--primary-color); text-decoration: none; }
-
-        /* លាក់ប៊ូតុងពេលកំពុង Print */
         .no-print { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="card" id="inputCard">
-    <h3 style="margin-top:0;">ចុះវាល និងចាប់ទិន្នន័យ</h3>
+<div class="card" id="uiCard">
+    <h3 style="margin-top:0;">កត់ត្រាទិន្នន័យវាល</h3>
     <video id="webcam" autoplay playsinline></video>
+    
     <div class="btn-group">
         <button class="btn-save" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
-        <div style="display:flex; gap:5px;">
-            <button class="btn-excel" style="flex:1" onclick="exportToExcel()">📊 Excel</button>
-            <button class="btn-pdf" style="flex:1" onclick="exportToPDF()">📄 ទាញយក PDF</button>
+        <div class="btn-row">
+            <button class="btn-refresh" onclick="location.reload()">🔄 Refresh</button>
+            <button class="btn-close" onclick="stopHardware()">✖ បិទ/Close</button>
         </div>
     </div>
 </div>
 
 <div id="reportArea">
     <div class="report-header">
-        <h2>របាយការណ៍សកម្មភាពចុះវាល</h2>
-        <p>កាលបរិច្ឆេទបង្កើត៖ <span id="reportGenDate"></span></p>
+        <h2 style="margin:5px;">របាយការណ៍សកម្មភាពប្រចាំថ្ងៃ</h2>
     </div>
     
+    <div style="display:flex; justify-content: flex-end; gap:5px; margin-bottom:10px;" class="action-btns">
+        <button class="btn-excel" onclick="exportToExcel()">📊 Excel</button>
+        <button class="btn-pdf" onclick="exportToPDF()">📄 PDF (ខ្មែរច្បាស់)</button>
+    </div>
+
     <table id="dataTable">
         <thead>
             <tr>
-                <th style="width: 8%;">ល.រ</th>
-                <th style="width: 18%;">ថ្ងៃម៉ោង</th>
-                <th style="width: 35%;">អាសយដ្ឋាន/តំបន់</th>
-                <th style="width: 17%;">ទីតាំង GPS</th>
-                <th style="width: 22%;">រូបភាពសកម្មភាព</th>
+                <th style="width: 7%;">ID</th>
+                <th style="width: 12%;">ថ្ងៃទី</th>
+                <th style="width: 10%;">ម៉ោង</th>
+                <th style="width: 35%;">អាសយដ្ឋាន</th>
+                <th style="width: 15%;">GPS</th>
+                <th style="width: 21%;">រូបភាព</th>
             </tr>
         </thead>
-        <tbody>
-            </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
 
 <script>
-    let db, stream;
+    let db, stream, watchID;
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('hiddenCanvas');
     let lat = 0, lon = 0, currentAddress = "កំពុងស្វែងរក...";
 
-    // ១. រៀបចំ Database
-    const request = indexedDB.open("ProReportDB", 1);
+    // ១. Database
+    const request = indexedDB.open("FieldReportDB_V3", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
     };
     request.onsuccess = e => { db = e.target.result; loadTable(); };
 
-    // ២. បើកកាមេរ៉ា និង GPS
-    async function initHardware() {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-        
-        navigator.geolocation.watchPosition(async pos => {
-            lat = pos.coords.latitude; lon = pos.coords.longitude;
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
-            const data = await res.json();
-            currentAddress = data.display_name || "មិនស្គាល់";
-        });
-        document.getElementById('reportGenDate').textContent = new Date().toLocaleDateString('km-KH');
+    // ២. Hardware
+    async function init() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+            watchID = navigator.geolocation.watchPosition(async pos => {
+                lat = pos.coords.latitude; lon = pos.coords.longitude;
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
+                const data = await res.json();
+                currentAddress = data.display_name || "មិនស្គាល់";
+            });
+        } catch (e) { alert("Error: " + e); }
     }
 
-    // ៣. ថតរូប និងរក្សាទុក
+    // ៣. Capture & Save (បំបែក Date និង Time)
     function captureAndSave() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        const imgData = canvas.toDataURL('image/jpeg', 0.7);
+        const img = canvas.toDataURL('image/jpeg', 0.7);
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('km-KH');
+        const timeStr = now.toLocaleTimeString('km-KH');
 
         const tx = db.transaction("records", "readwrite");
         tx.objectStore("records").add({
-            time: new Date().toLocaleString('km-KH'),
+            date: dateStr,
+            time: timeStr,
             address: currentAddress,
             gps: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
-            image: imgData
+            image: img
         });
         tx.oncomplete = () => { loadTable(); alert("រក្សាទុកបានជោគជ័យ!"); };
     }
 
-    // ៤. បង្ហាញក្នុងតារាង
+    function stopHardware() {
+        if(stream) stream.getTracks().forEach(t => t.stop());
+        if(watchID) navigator.geolocation.clearWatch(watchID);
+        document.getElementById('uiCard').innerHTML = "<h3>Hardware ត្រូវបានបិទ</h3><button onclick='location.reload()'>បើកឡើងវិញ</button>";
+    }
+
+    // ៤. Load Table
     function loadTable() {
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            e.target.result.forEach((item, index) => {
-                const mapsUrl = `https://www.google.com/maps?q=${item.gps.replace(' ', '')}`;
+            e.target.result.forEach(item => {
                 tbody.innerHTML += `<tr>
-                    <td style="text-align:center;">${index + 1}</td>
+                    <td style="text-align:center;">ID-${item.id}</td>
+                    <td>${item.date}</td>
                     <td>${item.time}</td>
                     <td>${item.address}</td>
-                    <td><a href="${mapsUrl}" class="maps-url" target="_blank">📍 ចុចមើលផែនទី<br>(${item.gps})</a></td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" style="text-decoration:none; font-size:10px;">📍 ${item.gps}</a></td>
                     <td style="text-align:center;"><img src="${item.image}" class="img-cell"></td>
                 </tr>`;
             });
         };
     }
 
-    // ៥. EXPORT PDF (រៀបចំស្អាត មិនដាច់អក្សរ)
+    // ៥. EXPORT PDF (ដោះស្រាយបញ្ហាអក្សរខ្មែរ)
     function exportToPDF() {
         const element = document.getElementById('reportArea');
         const opt = {
-            margin: [0.5, 0.3, 0.5, 0.3], // [លើ, ឆ្វេង, ក្រោម, ស្ដាំ]
-            filename: 'របាយការណ៍_ចុះវាល.pdf',
+            margin: 0.3,
+            filename: 'Field_Report_Khmer.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
-                scale: 2, 
+                scale: 3, // បង្កើន Scale ដើម្បីឱ្យអក្សរខ្មែរច្បាស់
                 useCORS: true,
-                letterRendering: true 
+                logging: false,
+                letterRendering: true
             },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
         };
-
-        // លាក់ Card បញ្ជាពេលកំពុង Generate
-        document.getElementById('inputCard').classList.add('no-print');
         
+        // លាក់ប៊ូតុងមិនឱ្យជាប់ក្នុង PDF
+        document.querySelector('.action-btns').classList.add('no-print');
+        document.getElementById('uiCard').classList.add('no-print');
+
         html2pdf().set(opt).from(element).save().then(() => {
-            document.getElementById('inputCard').classList.remove('no-print');
+            document.querySelector('.action-btns').classList.remove('no-print');
+            document.getElementById('uiCard').classList.remove('no-print');
         });
     }
 
-    // ៦. EXPORT EXCEL (មានរូបភាព)
+    // ៦. EXPORT EXCEL
     async function exportToExcel() {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Report');
         worksheet.columns = [
-            { header: 'ល.រ', key: 'id', width: 5 },
-            { header: 'ថ្ងៃម៉ោង', key: 'time', width: 25 },
-            { header: 'អាសយដ្ឋាន', key: 'address', width: 50 },
+            { header: 'លេខកូដ', key: 'id', width: 10 },
+            { header: 'ថ្ងៃទី', key: 'date', width: 15 },
+            { header: 'ម៉ោង', key: 'time', width: 15 },
+            { header: 'អាសយដ្ឋាន', key: 'address', width: 40 },
             { header: 'GPS', key: 'gps', width: 20 }
         ];
 
@@ -207,17 +217,17 @@
         });
 
         for(let i=0; i<records.length; i++) {
-            worksheet.addRow({ id: i+1, time: records[i].time, address: records[i].address, gps: records[i].gps });
+            const row = worksheet.addRow({ id: `ID-${records[i].id}`, date: records[i].date, time: records[i].time, address: records[i].address, gps: records[i].gps });
             const imgId = workbook.addImage({ base64: records[i].image, extension: 'jpeg' });
-            worksheet.addImage(imgId, { tl: { col: 4, row: i+1 }, ext: { width: 100, height: 70 } });
+            worksheet.addImage(imgId, { tl: { col: 5, row: i+1 }, ext: { width: 100, height: 70 } });
             worksheet.getRow(i+2).height = 60;
         }
 
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), "របាយការណ៍.xlsx");
+        saveAs(new Blob([buffer]), "Report_Khmer.xlsx");
     }
 
-    initHardware();
+    init();
 </script>
 </body>
 </html>
