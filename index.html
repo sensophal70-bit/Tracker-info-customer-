@@ -3,94 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>កម្មវិធីកត់ត្រាវាល Offline</title>
-    
+    <title>Field Capture Tool</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
-
-        body { 
-            font-family: 'Kantumruy Pro', sans-serif; 
-            display: flex; flex-direction: column; align-items: center; 
-            background: #f0f2f5; padding: 15px; margin: 0;
-        }
-
-        .card { 
-            background: white; padding: 20px; border-radius: 15px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
-        }
-
-        h2 { color: #1a73e8; text-align: center; margin-top: 0; font-size: 1.4rem; }
-
-        #camera-container { position: relative; width: 100%; margin-bottom: 10px; }
-        
-        video, #preview { 
-            width: 100%; border-radius: 10px; background: #000; 
-            border: 2px solid #ddd; aspect-ratio: 4/3; object-fit: cover;
-        }
-
-        #preview { display: none; } /* លាក់រូបថត Preview សិន */
-
-        .info-box { 
-            background: #f8f9fa; padding: 12px; border-radius: 8px; 
-            margin-bottom: 15px; border-left: 4px solid #007bff;
-        }
-
-        .info-item { font-size: 0.85rem; color: #333; margin-bottom: 5px; }
-        .info-item strong { color: #555; }
-
-        input { 
-            width: 100%; padding: 12px; margin: 10px 0; 
-            border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box;
-            font-family: 'Kantumruy Pro'; font-size: 1rem;
-        }
-
-        .btn-group { display: flex; gap: 10px; }
-
-        button { 
-            flex: 1; padding: 14px; border: none; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro';
-            font-size: 1rem; transition: 0.2s;
-        }
-
+        body { font-family: 'Kantumruy Pro', sans-serif; display: flex; flex-direction: column; align-items: center; background: #f4f7f6; padding: 15px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        video, #preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid #ddd; }
+        #preview { display: none; }
+        .info-box { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 0.9rem; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Kantumruy Pro'; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.3s; }
         .btn-capture { background: #007bff; color: white; }
         .btn-save { background: #28a745; color: white; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button:active { transform: scale(0.95); }
-
-        .status-offline { 
-            background: #ff4d4d; color: white; padding: 5px; 
-            width: 100%; text-align: center; display: none; font-size: 0.8rem;
-        }
+        .btn-reset { background: #6c757d; color: white; }
     </style>
 </head>
 <body>
 
-<div id="offline-mode" class="status-offline">អ្នកកំពុងប្រើប្រាស់ Offline</div>
-
 <div class="card">
-    <h2>កត់ត្រាការចុះជួប</h2>
+    <h2 style="text-align:center; color:#333;">កត់ត្រាទិន្នន័យ</h2>
     
-    <div id="camera-container">
-        <video id="webcam" autoplay playsinline></video>
-        <img id="preview" alt="Captured Photo">
-    </div>
-
-    <input type="text" id="customerName" placeholder="ឈ្មោះអតិថិជន...">
+    <video id="webcam" autoplay playsinline></video>
+    <img id="preview">
 
     <div class="info-box">
-        <div class="info-item"><strong>ថ្ងៃម៉ោង:</strong> <span id="dateTime">--</span></div>
-        <div class="info-item"><strong>ទីតាំង:</strong> <span id="location">កំពុងស្វែងរក...</span></div>
+        <input type="text" id="customerName" placeholder="ឈ្មោះអតិថិជន...">
+        <div><strong>កាលបរិច្ឆេទ:</strong> <span id="dateTime">--</span></div>
+        <div><strong>GPS:</strong> <span id="location">កំពុងស្វែងរក...</span></div>
     </div>
     
     <div class="btn-group">
-        <button id="capBtn" class="btn-capture" onclick="takeSnapshot()">ថតរូប</button>
-        <button id="saveBtn" class="btn-save" onclick="downloadData()" disabled>រក្សាទុក</button>
+        <button id="capBtn" class="btn-capture" onclick="takeSnapshot()">ថតរូប និងចាប់ទិន្នន័យ</button>
+        <button id="saveBtn" class="btn-save" onclick="saveAllData()" disabled>រក្សាទុកជា File (Image + Text)</button>
+        <button id="resetBtn" class="btn-reset" onclick="resetCamera()" style="display:none;">ថតថ្មី</button>
     </div>
-    
-    <button id="resetBtn" style="margin-top:10px; background:#6c757d; color:white; width:100%; display:none;" onclick="resetCamera()">ថតថ្មី</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -104,101 +52,86 @@
     const saveBtn = document.getElementById('saveBtn');
     const capBtn = document.getElementById('capBtn');
     const resetBtn = document.getElementById('resetBtn');
-    
-    let capturedImage = null;
+
+    let capturedData = { img: null, name: "", time: "", gps: "" };
 
     // ១. បើកកាមេរ៉ា
     async function initCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" }, audio: false 
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-        } catch (err) {
-            alert("សូមអនុញ្ញាត (Allow) ឱ្យប្រើកាមេរ៉ា ដើម្បីថតរូប!");
-        }
+        } catch (err) { alert("សូមអនុញ្ញាតកាមេរ៉ា!"); }
     }
 
-    // ២. ធ្វើបច្ចុប្បន្នភាពម៉ោង និង GPS
-    setInterval(() => {
-        const now = new Date();
-        dateTimeEl.textContent = now.toLocaleString('km-KH');
-    }, 1000);
-
+    // ២. ម៉ោង និង GPS
+    setInterval(() => { dateTimeEl.textContent = new Date().toLocaleString('km-KH'); }, 1000);
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
             locationEl.textContent = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
         }, null, { enableHighAccuracy: true });
     }
 
-    // ៣. មុខងារថតរូប (Snapshot)
+    // ៣. មុខងារថតរូប និងចាប់យកអត្ថបទ
     function takeSnapshot() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // គូររូបភាព
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // បន្ថែមអក្សរ Watermark (កាលបរិច្ឆេទ + GPS)
-            ctx.font = "bold 20px Arial";
-            ctx.fillStyle = "yellow";
-            const watermark = `${dateTimeEl.textContent} | GPS: ${locationEl.textContent}`;
-            ctx.fillText(watermark, 20, canvas.height - 20);
+        const name = document.getElementById('customerName').value;
+        if (!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
 
-            capturedImage = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // បង្ហាញរូប Preview
-            preview.src = capturedImage;
-            preview.style.display = 'block';
-            video.style.display = 'none';
-            
-            saveBtn.disabled = false;
-            capBtn.style.display = 'none';
-            resetBtn.style.display = 'block';
-        }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // រក្សាទុកទិន្នន័យក្នុង Object
+        capturedData.img = canvas.toDataURL('image/jpeg');
+        capturedData.name = name;
+        capturedData.time = dateTimeEl.textContent;
+        capturedData.gps = locationEl.textContent;
+
+        preview.src = capturedData.img;
+        preview.style.display = 'block';
+        video.style.display = 'none';
+        
+        saveBtn.disabled = false;
+        capBtn.style.display = 'none';
+        resetBtn.style.display = 'block';
     }
 
-    // ៤. ថតថ្មី
+    // ៤. រក្សាទុកជា File រូបភាព និង File អត្ថបទ (.txt)
+    function saveAllData() {
+        const fileName = `Customer_${capturedData.name}_${Date.now()}`;
+
+        // រក្សាទុករូបភាព
+        const imgLink = document.createElement('a');
+        imgLink.download = `${fileName}.jpg`;
+        imgLink.href = capturedData.img;
+        imgLink.click();
+
+        // បង្កើត និងរក្សាទុក File Text
+        const textContent = `ព័ត៌មានអតិថិជន\n` +
+                            `--------------------------\n` +
+                            `ឈ្មោះ: ${capturedData.name}\n` +
+                            `កាលបរិច្ឆេទ: ${capturedData.time}\n` +
+                            `ទីតាំង GPS: ${capturedData.gps}\n` +
+                            `--------------------------`;
+        
+        const blob = new Blob([textContent], { type: 'text/plain' });
+        const textLink = document.createElement('a');
+        textLink.download = `${fileName}.txt`;
+        textLink.href = URL.createObjectURL(blob);
+        textLink.click();
+
+        alert("បានរក្សាទុក File រូបភាព និង File អត្ថបទ រួចរាល់!");
+    }
+
     function resetCamera() {
         video.style.display = 'block';
         preview.style.display = 'none';
         saveBtn.disabled = true;
         capBtn.style.display = 'block';
         resetBtn.style.display = 'none';
-        capturedImage = null;
-    }
-
-    // ៥. ទាញយករូបភាព (Download)
-    function downloadData() {
-        const name = document.getElementById('customerName').value || 'unnamed';
-        const link = document.createElement('a');
-        link.download = `អតិថិជន_${name}_${Date.now()}.jpg`;
-        link.href = capturedImage;
-        link.click();
-        alert("បានរក្សាទុករូបភាពក្នុងម៉ាស៊ីន!");
-    }
-
-    // ៦. ឆែកស្ថានភាព Offline/Online
-    window.addEventListener('offline', () => {
-        document.getElementById('offline-mode').style.display = 'block';
-    });
-    window.addEventListener('online', () => {
-        document.getElementById('offline-mode').style.display = 'none';
-    });
-
-    // ៧. ចុះឈ្មោះ Service Worker (Offline Support)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Offline service active.'))
-                .catch(err => console.log('Offline service failed.', err));
-        });
     }
 
     initCamera();
 </script>
-
 </body>
 </html>
