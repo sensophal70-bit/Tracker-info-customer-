@@ -3,31 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យវាល - Khmer Support</title>
+    <title>ប្រព័ន្ធកត់ត្រាទិន្នន័យវាល - Full Version</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
         
         body { 
             font-family: 'Kantumruy Pro', sans-serif; 
-            background: #f0f2f5; padding: 15px; 
+            background: #f4f6f9; padding: 15px; 
             display: flex; flex-direction: column; align-items: center; 
+            margin: 0;
         }
 
         .card { 
             background: white; padding: 20px; border-radius: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 420px; 
             margin-bottom: 20px; text-align: center;
         }
 
         video { 
-            width: 100%; border-radius: 10px; background: #000; 
-            aspect-ratio: 4/3; object-fit: cover; border: 2px solid #007bff;
+            width: 100%; border-radius: 12px; background: #000; 
+            aspect-ratio: 4/3; object-fit: cover; border: 3px solid #007bff;
         }
 
         .status-box { 
             background: #f8f9fa; padding: 12px; border-radius: 8px; 
             font-size: 0.9rem; text-align: left; margin: 15px 0;
-            border-left: 5px solid #28a745;
+            border-left: 5px solid #28a745; line-height: 1.6;
         }
 
         .btn-group { display: flex; flex-direction: column; gap: 8px; }
@@ -36,48 +37,55 @@
         button { 
             width: 100%; padding: 12px; border: none; border-radius: 8px; 
             cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; 
-            transition: 0.2s;
+            transition: 0.2s; font-size: 0.9rem;
         }
 
-        .btn-main { background: #28a745; color: white; font-size: 1.1rem; padding: 15px; }
-        .btn-refresh { background: #f39c12; color: white; }
-        .btn-close { background: #dc3545; color: white; }
-        .btn-export { background: #17a2b8; color: white; flex: 1; font-size: 0.8rem; }
-        .btn-pdf { background: #6c757d; color: white; flex: 1; font-size: 0.8rem; }
+        .btn-main { background: #28a745; color: white; font-size: 1.1rem; padding: 16px; }
+        .btn-refresh { background: #f39c12; color: white; flex: 1; }
+        .btn-close { background: #dc3545; color: white; flex: 1; }
+        .btn-excel { background: #1d6f42; color: white; flex: 1; }
+        .btn-pdf { background: #ad0b00; color: white; flex: 1; }
+        .btn-clear { background: #6c757d; color: white; margin-top: 10px; font-size: 0.7rem; padding: 5px; }
 
-        button:active { transform: scale(0.98); opacity: 0.9; }
+        button:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* តារាង */
-        .table-section { width: 100%; max-width: 900px; background: white; padding: 15px; border-radius: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #007bff; color: white; }
-        .img-thumb { width: 45px; border-radius: 3px; }
+        /* តារាងបង្ហាញទិន្នន័យ */
+        .table-section { 
+            width: 100%; max-width: 950px; background: white; 
+            padding: 15px; border-radius: 12px; overflow-x: auto; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #007bff; color: white; white-space: nowrap; }
+        .img-thumb { width: 60px; height: 45px; border-radius: 4px; object-fit: cover; border: 1px solid #ddd; }
+        .maps-link { color: #007bff; text-decoration: none; font-weight: bold; }
 
-        /* សម្រាប់ Print PDF */
+        /* កំណត់ការ Print PDF */
         @media print {
-            body * { visibility: hidden; }
-            #printableArea, #printableArea * { visibility: visible; }
-            #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .table-section { box-shadow: none; width: 100%; max-width: 100%; }
+            table { font-size: 10px; }
+            .img-thumb { width: 80px; height: 60px; }
         }
     </style>
 </head>
 <body>
 
 <div class="card no-print">
-    <h3 style="margin-top:0;">កត់ត្រាស្វ័យប្រវត្តិ (Khmer)</h3>
+    <h3 style="margin-top:0; color:#007bff;">ប្រព័ន្ធកត់ត្រាទិន្នន័យ (Khmer)</h3>
     <video id="webcam" autoplay playsinline></video>
 
     <div class="status-box">
-        <div><strong>ID:</strong> <span id="autoID">--</span></div>
+        <div><strong>លេខកូដ (ID):</strong> <span id="autoID" style="color:#007bff; font-weight:bold;">ID-0001</span></div>
         <div><strong>ថ្ងៃម៉ោង:</strong> <span id="curDate">--</span></div>
-        <div><strong>តំបន់:</strong> <span id="curAddr">កំពុងស្វែងរក...</span></div>
+        <div><strong>តំបន់:</strong> <span id="curAddr" style="color:#e67e22;">កំពុងស្វែងរក...</span></div>
         <div><strong>GPS:</strong> <span id="curGPS">--</span></div>
     </div>
     
     <div class="btn-group">
-        <button class="btn-main" onclick="autoCaptureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
+        <button class="btn-main" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុកស្វ័យប្រវត្តិ</button>
         <div class="btn-row">
             <button class="btn-refresh" onclick="window.location.reload()">🔄 Refresh</button>
             <button class="btn-close" onclick="closeApp()">✖ បិទ</button>
@@ -85,24 +93,30 @@
     </div>
 </div>
 
-<div class="table-section" id="printableArea">
-    <h4 style="margin:5px 0;">ទិន្នន័យបានរក្សាទុក</h4>
-    <div class="btn-row no-print" style="margin-bottom: 10px;">
-        <button class="btn-export" onclick="exportToExcel()">📊 Export Excel</button>
-        <button class="btn-pdf" onclick="exportToPDF()">📄 Export PDF</button>
-    </div>
-    <table id="custTable">
+<div class="table-section">
+    <h4 style="margin:5px 0; display: flex; justify-content: space-between; align-items: center;">
+        ទិន្នន័យដែលបានរក្សាទុក
+        <div class="btn-row no-print">
+            <button class="btn-excel" onclick="exportToExcel()">📊 Excel</button>
+            <button class="btn-pdf" onclick="window.print()">📄 PDF</button>
+        </div>
+    </h4>
+    
+    <table id="dataTable">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>លេខកូដ</th>
                 <th>ថ្ងៃម៉ោង</th>
-                <th>តំបន់ (Address)</th>
-                <th>GPS Link</th>
+                <th>តំបន់ (អាសយដ្ឋានខ្មែរ)</th>
+                <th>ទីតាំង GPS</th>
                 <th>រូបភាព</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            </tbody>
     </table>
+    
+    <button class="btn-clear no-print" onclick="clearAllData()">សម្អាតទិន្នន័យទាំងអស់ (Clear DB)</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -113,8 +127,8 @@
     const canvas = document.getElementById('hiddenCanvas');
     let lat = 0, lon = 0, currentAddress = "កំពុងស្វែងរក...";
 
-    // ១. បង្កើត Database
-    const request = indexedDB.open("FieldCaptureDB", 1);
+    // ១. បង្កើត Database (IndexedDB)
+    const request = indexedDB.open("KhmerFieldCaptureDB", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
@@ -125,12 +139,12 @@
         updateNextID();
     };
 
-    // ២. ចាប់ផ្ដើម Camera & GPS (Khmer Address)
+    // ២. ចាប់ផ្ដើម Camera & GPS (អាសយដ្ឋានជាភាសាខ្មែរ)
     async function startApp() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-        } catch (e) { alert("សូមបើកកាមេរ៉ា!"); }
+        } catch (e) { alert("សូមអនុញ្ញាតឱ្យប្រើកាមេរ៉ា!"); }
 
         setInterval(() => {
             document.getElementById('curDate').textContent = new Date().toLocaleString('km-KH');
@@ -142,17 +156,17 @@
             document.getElementById('curGPS').textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
             
             try {
-                // API នេះផ្ដល់ឈ្មោះតំបន់ជាភាសាខ្មែរ
+                // API សម្រាប់ទាញយកអាសយដ្ឋានជាភាសាខ្មែរ
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
                 const data = await res.json();
-                currentAddress = data.display_name;
+                currentAddress = data.display_name || "មិនស្គាល់តំបន់";
                 document.getElementById('curAddr').textContent = currentAddress;
             } catch (err) { currentAddress = "មិនអាចទាញយកឈ្មោះតំបន់"; }
         }, null, { enableHighAccuracy: true });
     }
 
-    // ៣. ថតរូប និងរក្សាទុក
-    function autoCaptureAndSave() {
+    // ៣. ថតរូប និងរក្សាទុក (One-Click)
+    function captureAndSave() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
@@ -170,13 +184,13 @@
         store.add(data).onsuccess = () => {
             loadTable();
             updateNextID();
-            alert("រក្សាទុកជោគជ័យ!");
+            alert("ទិន្នន័យលេខ " + document.getElementById('autoID').textContent + " ត្រូវបានរក្សាទុក!");
         };
     }
 
     // ៤. បង្ហាញក្នុងតារាង
     function loadTable() {
-        const tbody = document.querySelector("#custTable tbody");
+        const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
         db.transaction("records").objectStore("records").openCursor(null, 'prev').onsuccess = e => {
             const cursor = e.target.result;
@@ -185,8 +199,8 @@
                 const tr = `<tr>
                     <td>ID-${item.id.toString().padStart(4, '0')}</td>
                     <td>${item.date}</td>
-                    <td>${item.address}</td>
-                    <td><a href="https://maps.google.com/?q=${item.gps}" target="_blank">📍 ផែនទី</a></td>
+                    <td style="min-width:150px;">${item.address}</td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" class="maps-link">📍 ផែនទី</a></td>
                     <td><img src="${item.image}" class="img-thumb"></td>
                 </tr>`;
                 tbody.innerHTML += tr;
@@ -197,35 +211,42 @@
 
     function updateNextID() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            document.getElementById('autoID').textContent = "ID-" + (e.target.result.length + 1).toString().padStart(4, '0');
+            const count = e.target.result.length;
+            document.getElementById('autoID').textContent = "ID-" + (count + 1).toString().padStart(4, '0');
         };
     }
 
-    // ៥. Export to Excel (គាំទ្រ Font ខ្មែរ)
+    // ៥. Export to Excel (UTF-8 BOM សម្រាប់អក្សរខ្មែរ)
     function exportToExcel() {
-        let csvContent = "\uFEFF"; // UTF-8 BOM សម្រាប់អក្សរខ្មែរ
-        csvContent += "ID,កាលបរិច្ឆេទ,តំបន់,GPS\n";
+        let csvContent = "\uFEFF"; // UTF-8 BOM
+        csvContent += "លេខកូដ (ID),ថ្ងៃម៉ោង,តំបន់ (Address),ទីតាំង (GPS),តំណភ្ជាប់រូបភាព (Base64)\n";
 
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             e.target.result.forEach(row => {
-                let addr = row.address.replace(/,/g, " "); // លុបក្បៀសចេញកុំឱ្យច្រឡំ Column
-                csvContent += `ID-${row.id},${row.date},${addr},${row.gps}\n`;
+                let addr = row.address.replace(/,/g, " "); 
+                csvContent += `ID-${row.id},${row.date},${addr},${row.gps},"${row.image}"\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "របាយការណ៍_ទិន្នន័យវាល.csv";
+            link.download = `របាយការណ៍_ទិន្នន័យវាល_${Date.now()}.csv`;
             link.click();
         };
     }
 
-    // ៦. Export to PDF (ប្រើ Browser Print)
-    function exportToPDF() {
-        window.print();
+    // ៦. មុខងារបន្ថែម
+    function clearAllData() {
+        if (confirm("តើអ្នកប្រាកដថាចង់លុបទិន្នន័យទាំងអស់ក្នុង Database មែនទេ?")) {
+            const transaction = db.transaction(["records"], "readwrite");
+            transaction.objectStore("records").clear();
+            transaction.oncomplete = () => window.location.reload();
+        }
     }
 
     function closeApp() {
-        if (confirm("តើអ្នកចង់បិទកម្មវិធីមែនទេ?")) window.location.href = "about:blank";
+        if (confirm("តើអ្នកចង់បិទកម្មវិធីមែនទេ?")) {
+            window.location.href = "about:blank";
+        }
     }
 
     startApp();
