@@ -3,109 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធកត់ត្រាទិន្នន័យវាលស្វ័យប្រវត្តិ</title>
+    <title>Field Capture Pro - Export Image to Excel</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
+        body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; margin-bottom: 20px; text-align: center; }
+        video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid #007bff; }
+        .status-box { background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: left; margin: 10px 0; border-left: 5px solid #28a745; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; }
+        .btn-main { background: #28a745; color: white; font-size: 1.1rem; }
+        .btn-excel { background: #1d6f42; color: white; }
+        .btn-pdf { background: #ad0b00; color: white; }
+        .btn-close { background: #dc3545; color: white; }
         
-        body { 
-            font-family: 'Kantumruy Pro', sans-serif; 
-            background: #f0f2f5; padding: 15px; 
-            display: flex; flex-direction: column; align-items: center; 
-            margin: 0;
-        }
-
-        .card { 
-            background: white; padding: 20px; border-radius: 15px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 420px; 
-            margin-bottom: 20px; text-align: center;
-        }
-
-        video { 
-            width: 100%; border-radius: 12px; background: #000; 
-            aspect-ratio: 4/3; object-fit: cover; border: 3px solid #007bff;
-        }
-
-        .status-box { 
-            background: #f8f9fa; padding: 12px; border-radius: 8px; 
-            font-size: 0.85rem; text-align: left; margin: 15px 0;
-            border-left: 5px solid #28a745; line-height: 1.6;
-        }
-
-        .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .btn-row { display: flex; gap: 8px; }
-
-        button { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; 
-            transition: 0.2s; font-size: 0.95rem;
-        }
-
-        .btn-main { background: #28a745; color: white; font-size: 1.1rem; padding: 16px; }
-        .btn-refresh { background: #f39c12; color: white; flex: 1; }
-        .btn-close { background: #dc3545; color: white; flex: 1; }
-        .btn-excel { background: #1d6f42; color: white; flex: 1; }
-        .btn-pdf { background: #ad0b00; color: white; flex: 1; }
-
-        button:active { transform: scale(0.96); opacity: 0.9; }
-
-        /* តារាងរបាយការណ៍ */
-        .table-section { 
-            width: 100%; max-width: 950px; background: white; 
-            padding: 15px; border-radius: 12px; overflow-x: auto; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        th { background: #007bff; color: white; white-space: nowrap; }
-        .img-thumb { width: 60px; height: 45px; border-radius: 4px; object-fit: cover; border: 1px solid #ddd; }
-        .maps-link { color: #007bff; text-decoration: none; font-weight: bold; }
-        
-        /* លាក់ប៊ូតុងពេល Export PDF */
+        #reportArea { width: 100%; max-width: 900px; background: white; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #007bff; color: white; }
+        .img-preview { width: 60px; height: 45px; object-fit: cover; border-radius: 4px; }
         .no-print { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="card" id="mainControl">
-    <h3 style="margin-top:0; color:#007bff;">ប្រព័ន្ធកត់ត្រាទិន្នន័យ (Hardware Control)</h3>
+<div class="card">
+    <h3>កត់ត្រាទិន្នន័យ (មានរូបក្នុង Excel)</h3>
     <video id="webcam" autoplay playsinline></video>
-
     <div class="status-box">
-        <div><strong>លេខកូដ (ID):</strong> <span id="autoID" style="color:#007bff; font-weight:bold;">ID-0001</span></div>
-        <div><strong>ថ្ងៃម៉ោង:</strong> <span id="curDate">--</span></div>
-        <div><strong>តំបន់:</strong> <span id="curAddr" style="color:#e67e22;">កំពុងស្វែងរក...</span></div>
+        <div><strong>ID:</strong> <span id="autoID">ID-0001</span></div>
+        <div><strong>តំបន់:</strong> <span id="curAddr">កំពុងរក...</span></div>
         <div><strong>GPS:</strong> <span id="curGPS">--</span></div>
     </div>
-    
     <div class="btn-group">
-        <button class="btn-main" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុកស្វ័យប្រវត្តិ</button>
-        <div class="btn-row">
-            <button class="btn-refresh" onclick="location.reload()">🔄 Refresh</button>
-            <button class="btn-close" onclick="stopHardware()">✖ បិទ Hardware</button>
-        </div>
+        <button class="btn-main" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
+        <button class="btn-close" onclick="stopHardware()">✖ បិទកាមេរ៉ា/GPS</button>
     </div>
 </div>
 
-<div class="table-section" id="reportArea">
-    <h4 style="margin:5px 0; display: flex; justify-content: space-between; align-items: center;">
-        របាយការណ៍ទិន្នន័យ
-        <div class="btn-row">
-            <button class="btn-excel" onclick="exportToXLSX()">📊 Export Excel</button>
-            <button class="btn-pdf" onclick="exportToPDF()">📄 Export PDF</button>
+<div id="reportArea">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4 style="margin:0;">របាយការណ៍សរុប</h4>
+        <div style="display:flex; gap:5px;">
+            <button class="btn-excel" onclick="exportToExcelWithImages()">📊 Excel (មានរូប)</button>
+            <button class="btn-pdf" onclick="exportToPDF()">📄 PDF</button>
         </div>
-    </h4>
-    
+    </div>
     <table id="dataTable">
         <thead>
             <tr>
                 <th>លេខកូដ</th>
                 <th>ថ្ងៃម៉ោង</th>
-                <th>តំបន់ (អាសយដ្ឋាន)</th>
-                <th>ទីតាំង GPS</th>
+                <th>អាសយដ្ឋាន</th>
+                <th>GPS Link</th>
                 <th>រូបភាព</th>
             </tr>
         </thead>
@@ -119,136 +74,138 @@
     let db, stream, watchID;
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('hiddenCanvas');
-    let lat = 0, lon = 0, currentAddress = "កំពុងស្វែងរក...";
+    let lat = 0, lon = 0, currentAddress = "";
 
-    // ១. បង្កើត Database (IndexedDB)
-    const request = indexedDB.open("FinalFieldDB", 1);
+    // ១. Database Setup
+    const request = indexedDB.open("FieldCaptureDB_V2", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("records", { keyPath: "id", autoIncrement: true });
     };
-    request.onsuccess = e => {
-        db = e.target.result;
-        loadTable();
-        updateNextID();
-    };
+    request.onsuccess = e => { db = e.target.result; loadTable(); updateNextID(); };
 
-    // ២. ចាប់ផ្ដើម Camera & GPS (អាសយដ្ឋានខ្មែរ)
-    async function startHardware() {
+    // ២. Hardware Control
+    async function startApp() {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-            
-            if (navigator.geolocation) {
-                watchID = navigator.geolocation.watchPosition(async pos => {
-                    lat = pos.coords.latitude;
-                    lon = pos.coords.longitude;
-                    document.getElementById('curGPS').textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                    
-                    try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
-                        const data = await res.json();
-                        currentAddress = data.display_name || "មិនស្គាល់តំបន់";
-                        document.getElementById('curAddr').textContent = currentAddress;
-                    } catch (err) { currentAddress = "មិនអាចទាញយកឈ្មោះតំបន់"; }
-                }, null, { enableHighAccuracy: true });
-            }
-        } catch (e) { alert("សូមអនុញ្ញាតកាមេរ៉ា និង GPS!"); }
+            watchID = navigator.geolocation.watchPosition(async pos => {
+                lat = pos.coords.latitude; lon = pos.coords.longitude;
+                document.getElementById('curGPS').textContent = `${lat}, ${lon}`;
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
+                const data = await res.json();
+                currentAddress = data.display_name || "មិនស្គាល់";
+                document.getElementById('curAddr').textContent = currentAddress;
+            }, null, { enableHighAccuracy: true });
+        } catch (e) { alert("សូមអនុញ្ញាតកាមេរ៉ា និង GPS"); }
     }
 
-    setInterval(() => {
-        document.getElementById('curDate').textContent = new Date().toLocaleString('km-KH');
-    }, 1000);
-
-    // ៣. បិទ Hardware (បិទកាមេរ៉ា និង GPS)
     function stopHardware() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
-        if (watchID) {
-            navigator.geolocation.clearWatch(watchID);
-        }
-        document.getElementById('curGPS').textContent = "OFFLINE";
-        document.getElementById('curAddr').textContent = "បានបិទ Hardware";
-        alert("កាមេរ៉ា និង GPS ត្រូវបានបិទ!");
+        if(stream) stream.getTracks().forEach(t => t.stop());
+        if(watchID) navigator.geolocation.clearWatch(watchID);
+        alert("Hardware ត្រូវបានបិទ!");
     }
 
-    // ៤. ថតរូប និងរក្សាទុក (One-Click)
+    // ៣. Capture & Save
     function captureAndSave() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        const capturedImg = canvas.toDataURL('image/jpeg', 0.6);
-
-        const store = db.transaction(["records"], "readwrite").objectStore("records");
-        const data = {
-            date: document.getElementById('curDate').textContent,
+        const imgData = canvas.toDataURL('image/jpeg', 0.6);
+        
+        const tx = db.transaction("records", "readwrite");
+        tx.objectStore("records").add({
+            date: new Date().toLocaleString('km-KH'),
             address: currentAddress,
             gps: `${lat},${lon}`,
-            image: capturedImg
-        };
-
-        store.add(data).onsuccess = () => {
-            loadTable();
-            updateNextID();
-            alert("រក្សាទុកជោគជ័យសម្រាប់ " + document.getElementById('autoID').textContent);
-        };
+            image: imgData
+        });
+        tx.oncomplete = () => { loadTable(); updateNextID(); alert("រក្សាទុកជោគជ័យ!"); };
     }
 
-    // ៥. បង្ហាញក្នុងតារាង (ជាមួយ Google Maps Link)
+    // ៤. Load Data to Table
     function loadTable() {
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
-        db.transaction("records").objectStore("records").openCursor(null, 'prev').onsuccess = e => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const item = cursor.value;
-                const mapsUrl = `https://www.google.com/maps?q=${item.gps}`;
-                const tr = `<tr>
-                    <td>ID-${item.id.toString().padStart(4, '0')}</td>
+        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
+            e.target.result.reverse().forEach(item => {
+                tbody.innerHTML += `<tr>
+                    <td>ID-${item.id}</td>
                     <td>${item.date}</td>
-                    <td style="min-width:150px;">${item.address}</td>
-                    <td><a href="${mapsUrl}" target="_blank" class="maps-link">📍 មើលលើផែនទី</a></td>
-                    <td><img src="${item.image}" class="img-thumb"></td>
+                    <td>${item.address}</td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank">📍 ផែនទី</a></td>
+                    <td><img src="${item.image}" class="img-preview"></td>
                 </tr>`;
-                tbody.innerHTML += tr;
-                cursor.continue();
-            }
+            });
         };
     }
 
     function updateNextID() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            document.getElementById('autoID').textContent = "ID-" + (e.target.result.length + 1).toString().padStart(4, '0');
+            document.getElementById('autoID').textContent = "ID-" + (e.target.result.length + 1);
         };
     }
 
-    // ៦. Export XLSX (Real Excel)
-    function exportToXLSX() {
-        const table = document.getElementById("dataTable");
-        const wb = XLSX.utils.table_to_book(table, { sheet: "របាយការណ៍" });
-        XLSX.writeFile(wb, "Field_Data_Report.xlsx");
+    // ៥. EXCEL EXPORT (ជាមួយការបង្កប់រូបភាព)
+    async function exportToExcelWithImages() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('របាយការណ៍វាល');
+
+        // កំណត់ក្បាលតារាង
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'ថ្ងៃម៉ោង', key: 'date', width: 25 },
+            { header: 'អាសយដ្ឋាន', key: 'address', width: 40 },
+            { header: 'GPS', key: 'gps', width: 20 },
+            { header: 'រូបភាព', key: 'image', width: 20 }
+        ];
+
+        const records = await new Promise(resolve => {
+            db.transaction("records").objectStore("records").getAll().onsuccess = e => resolve(e.target.result);
+        });
+
+        for (let i = 0; i < records.length; i++) {
+            const row = worksheet.addRow({
+                id: `ID-${records[i].id}`,
+                date: records[i].date,
+                address: records[i].address,
+                gps: records[i].gps
+            });
+            row.height = 60; // កំណត់កម្ពស់ជួរដើម្បីដាក់រូប
+
+            // បន្ថែមរូបភាពចូលក្នុង Cell
+            const imageId = workbook.addImage({
+                base64: records[i].image,
+                extension: 'jpeg',
+            });
+            worksheet.addImage(imageId, {
+                tl: { col: 4, row: i + 1 },
+                ext: { width: 100, height: 75 }
+            });
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), `Report_${Date.now()}.xlsx`);
     }
 
-    // ៧. Export PDF (បង្កើតជា File PDF ផ្ទាល់)
+    // ៦. PDF EXPORT (ធានាថាមានទិន្នន័យ)
     function exportToPDF() {
         const element = document.getElementById('reportArea');
         const opt = {
-            margin: 0.3,
-            filename: 'Field_Report.pdf',
+            margin: 0.2,
+            filename: 'Report.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
         };
-        // លាក់ប៊ូតុងពេល PDF កំពុង Generate
-        document.querySelectorAll('.btn-row button').forEach(b => b.classList.add('no-print'));
+        // លាក់ប៊ូតុងពេល Export
+        document.querySelectorAll('button').forEach(b => b.style.display = 'none');
         html2pdf().set(opt).from(element).save().then(() => {
-            document.querySelectorAll('.btn-row button').forEach(b => b.classList.remove('no-print'));
+            document.querySelectorAll('button').forEach(b => b.style.display = 'block');
         });
     }
 
-    startHardware();
+    startApp();
 </script>
 </body>
 </html>
