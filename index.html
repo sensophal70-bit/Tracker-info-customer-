@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Full PDF Fix</title>
+    <title>Field Capture Pro - Search by Date</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -13,17 +13,28 @@
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #f39c12; }
         body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f7; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        
+        /* កាមេរ៉ា */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; margin-bottom: 20px; text-align: center; }
         video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid var(--primary); }
+        
+        /* ផ្នែក Search */
         .search-section { width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .search-section input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; flex: 1; }
+        .search-section input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; }
+        #textSearch { flex: 2; min-width: 200px; }
+        #dateSearch { flex: 1; min-width: 150px; }
+
         button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; }
         .btn-save { background: var(--success); color: white; font-size: 1.1rem; width: 100%; margin-top: 10px; }
+        
+        /* តារាង */
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 850px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: var(--primary); color: white; }
+        th { background: var(--primary); color: white; position: sticky; top: 0; }
         .img-cell { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
+
+        /* Modal */
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; box-shadow: 0 0 30px rgba(0,0,0,0.3); border-radius: 12px; z-index: 1000; width: 90%; max-width: 400px; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
     </style>
@@ -31,27 +42,30 @@
 <body>
 
 <div class="card">
-    <h3 style="margin:0 0 10px 0; color: var(--primary);">កត់ត្រាសកម្មភាពវាល</h3>
     <video id="webcam" autoplay playsinline></video>
     <button class="btn-save" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
     <div style="display:flex; gap:8px; margin-top:10px;">
         <button style="background: var(--warning); color:white; flex:1" onclick="location.reload()">🔄 Refresh</button>
-        <button style="background: #6c757d; color:white; flex:1" onclick="stopHardware()">✖ បិទ</button>
+        <button style="background: #6c757d; color:white; flex:1" onclick="stopHardware()">✖ បិទកាមេរ៉ា</button>
     </div>
 </div>
 
 <div class="search-section">
     <input type="text" id="textSearch" placeholder="🔍 ស្វែងរកតាម ID ឬ អាសយដ្ឋាន..." onkeyup="loadTable()">
-    <input type="date" id="dateSearch" onchange="loadTable()">
+    <div style="display:flex; align-items:center; gap:5px;">
+        <span style="font-size:0.8rem;">ថ្ងៃទី៖</span>
+        <input type="date" id="dateSearch" onchange="loadTable()">
+    </div>
     <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបដែលរើស</button>
+    <button style="background: #eee; color:#333;" onclick="resetSearch()">🧹 Clear</button>
 </div>
 
 <div id="reportArea">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
-        <h3 style="margin:0;">របាយការណ៍សកម្មភាពប្រចាំថ្ងៃ</h3>
+        <h3 style="margin:0;">របាយការណ៍សកម្មភាព</h3>
         <div style="display:flex; gap:8px;">
             <button style="background:#1d6f42; color:white;" onclick="exportToExcel()">📊 Excel</button>
-            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 Export PDF (ទាំងអស់)</button>
+            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 PDF (ទាំងអស់)</button>
         </div>
     </div>
     <table id="dataTable">
@@ -83,7 +97,7 @@
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('hiddenCanvas');
 
-    const request = indexedDB.open("FinalFieldDB_V6", 1);
+    const request = indexedDB.open("FieldCaptureDB_Final", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("records", { keyPath: "id", autoIncrement: true }); };
     request.onsuccess = e => { db = e.target.result; loadTable(); startHardware(); };
 
@@ -97,7 +111,7 @@
                 const data = await res.json();
                 currentAddress = data.display_name || "មិនស្គាល់ទីតាំង";
             });
-        } catch (e) { console.log(e); }
+        } catch (e) { alert("សូមអនុញ្ញាតឱ្យប្រើប្រាស់ Camera/GPS"); }
     }
 
     function captureAndSave() {
@@ -107,7 +121,7 @@
         const now = new Date();
         const tx = db.transaction("records", "readwrite");
         tx.objectStore("records").add({
-            date: now.toLocaleDateString('km-KH'),
+            date: now.toLocaleDateString('km-KH'), // រក្សាទុកជា ថ្ងៃ/ខែ/ឆ្នាំ
             time: now.toLocaleTimeString('km-KH'),
             address: currentAddress,
             gps: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
@@ -116,19 +130,28 @@
         tx.oncomplete = () => loadTable();
     }
 
+    // មុខងារ Search រួមបញ្ចូលគ្នា (Text + Date)
     function loadTable() {
-        const tQ = document.getElementById('textSearch').value.toLowerCase();
-        const dQ = document.getElementById('dateSearch').value;
+        const textQ = document.getElementById('textSearch').value.toLowerCase();
+        const dateQ = document.getElementById('dateSearch').value; // ទម្រង់ YYYY-MM-DD
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
+
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             let data = e.target.result;
-            if (tQ) data = data.filter(i => i.address.toLowerCase().includes(tQ) || (`ID-${i.id}`).toLowerCase().includes(tQ));
-            if (dQ) {
-                const [y, m, d] = dQ.split('-');
-                const fD = `${parseInt(d)}/${parseInt(m)}/${y}`;
-                data = data.filter(i => i.date === fD);
+
+            // ១. ស្វែងរកតាមអត្ថបទ
+            if (textQ) {
+                data = data.filter(i => i.address.toLowerCase().includes(textQ) || (`ID-${i.id}`).toLowerCase().includes(textQ));
             }
+
+            // ២. ស្វែងរកតាមថ្ងៃខែ
+            if (dateQ) {
+                const [y, m, d] = dateQ.split('-');
+                const formattedDate = `${parseInt(d)}/${parseInt(m)}/${y}`; // បម្លែងទៅជាទម្រង់ថ្ងៃ/ខែ/ឆ្នាំ ខ្មែរ
+                data = data.filter(i => i.date === formattedDate);
+            }
+
             data.reverse().forEach(item => {
                 tbody.innerHTML += `<tr>
                     <td><input type="checkbox" class="row-select" value="${item.id}"></td>
@@ -143,36 +166,34 @@
         };
     }
 
-    // --- មុខងារ PDF ដែលបានកែសម្រួលឱ្យចេញគ្រប់ជួរ ---
+    function resetSearch() {
+        document.getElementById('textSearch').value = "";
+        document.getElementById('dateSearch').value = "";
+        loadTable();
+    }
+
+    // Export PDF (ទាញយកទិន្នន័យទាំងអស់)
     async function exportToPDF() {
-        const tx = db.transaction("records", "readonly");
-        const store = tx.objectStore("records");
-        
-        store.getAll().onsuccess = (e) => {
+        db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             const allData = e.target.result;
             if (allData.length === 0) return alert("គ្មានទិន្នន័យ!");
 
-            // បង្កើត Content សម្រាប់ PDF
             const container = document.createElement('div');
             container.style.padding = "20px";
-            container.style.fontFamily = "'Kantumruy Pro', sans-serif";
-            
             container.innerHTML = `
-                <div style="text-align:center; border-bottom:2px solid #333; margin-bottom:20px; padding-bottom:10px;">
-                    <h2 style="margin:0;">របាយការណ៍សកម្មភាពចុះវាលសរុប</h2>
-                    <p style="margin:5px 0;">កាលបរិច្ឆេទបង្កើត៖ ${new Date().toLocaleDateString('km-KH')}</p>
+                <div style="text-align:center; border-bottom:2px solid #333; margin-bottom:20px;">
+                    <h2 style="font-family:'Kantumruy Pro';">របាយការណ៍សកម្មភាពចុះវាលសរុប</h2>
+                    <p style="font-family:'Kantumruy Pro';">ថ្ងៃបង្កើត៖ ${new Date().toLocaleDateString('km-KH')}</p>
                 </div>
-                <table style="width:100%; border-collapse:collapse; font-size:10px;">
-                    <thead>
-                        <tr style="background:#007bff; color:white;">
-                            <th style="border:1px solid #333; padding:8px;">ID</th>
-                            <th style="border:1px solid #333; padding:8px;">ថ្ងៃទី</th>
-                            <th style="border:1px solid #333; padding:8px;">ម៉ោង</th>
-                            <th style="border:1px solid #333; padding:8px;">អាសយដ្ឋាន/តំបន់</th>
-                            <th style="border:1px solid #333; padding:8px;">GPS</th>
-                            <th style="border:1px solid #333; padding:8px;">រូបភាព</th>
-                        </tr>
-                    </thead>
+                <table style="width:100%; border-collapse:collapse; font-family:'Kantumruy Pro'; font-size:10px;">
+                    <thead><tr style="background:#007bff; color:white;">
+                        <th style="border:1px solid #333; padding:8px;">ID</th>
+                        <th style="border:1px solid #333; padding:8px;">ថ្ងៃទី</th>
+                        <th style="border:1px solid #333; padding:8px;">ម៉ោង</th>
+                        <th style="border:1px solid #333; padding:8px;">អាសយដ្ឋាន</th>
+                        <th style="border:1px solid #333; padding:8px;">GPS</th>
+                        <th style="border:1px solid #333; padding:8px;">រូបភាព</th>
+                    </tr></thead>
                     <tbody>
                         ${allData.reverse().map(item => `
                             <tr style="page-break-inside: avoid;">
@@ -180,7 +201,7 @@
                                 <td style="border:1px solid #333; padding:8px;">${item.date}</td>
                                 <td style="border:1px solid #333; padding:8px;">${item.time}</td>
                                 <td style="border:1px solid #333; padding:8px;">${item.address}</td>
-                                <td style="border:1px solid #333; padding:8px; font-size:8px;">${item.gps}</td>
+                                <td style="border:1px solid #333; padding:8px;">${item.gps}</td>
                                 <td style="border:1px solid #333; padding:5px; text-align:center;">
                                     <img src="${item.image}" style="width:80px; height:60px; object-fit:cover;">
                                 </td>
@@ -189,12 +210,7 @@
                     </tbody>
                 </table>
             `;
-
-            html2pdf().set({ 
-                margin: 0.3, filename: 'Full_Report.pdf', image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-            }).from(container).save();
+            html2pdf().set({ margin:0.3, filename:'Full_Report.pdf', image:{type:'jpeg', quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in', format:'a4', orientation:'landscape'} }).from(container).save();
         };
     }
 
@@ -214,6 +230,7 @@
         };
     }
 
+    // មុខងារដទៃទៀត (Edit, Delete, Select)
     function openEdit(id, addr) { document.getElementById('editId').value = id; document.getElementById('editAddr').value = addr; document.getElementById('editModal').style.display = 'block'; document.getElementById('overlay').style.display = 'block'; }
     function closeModal() { document.getElementById('editModal').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
     function updateData() {
