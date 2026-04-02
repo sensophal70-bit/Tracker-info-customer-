@@ -3,43 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Tool</title>
+    <title>កម្មវិធីកត់ត្រាវាលកម្រិតខ្ពស់</title>
     <link rel="manifest" href="manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap');
-        body { font-family: 'Kantumruy Pro', sans-serif; display: flex; flex-direction: column; align-items: center; background: #f4f7f6; padding: 15px; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        body { font-family: 'Kantumruy Pro', sans-serif; display: flex; flex-direction: column; align-items: center; background: #eef2f3; padding: 15px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
         video, #preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid #ddd; }
         #preview { display: none; }
-        .info-box { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 0.9rem; }
+        .info-box { background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 0.9rem; line-height: 1.6; }
+        .info-box div { margin-bottom: 5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
+        strong { color: #007bff; }
         input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Kantumruy Pro'; }
-        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; }
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.3s; }
         .btn-capture { background: #007bff; color: white; }
         .btn-save { background: #28a745; color: white; }
-        .btn-reset { background: #6c757d; color: white; }
-        .btn-refresh { background: #f39c12; color: white; margin-top: 10px; }
+        .btn-refresh { background: #f39c12; color: white; }
+        button:disabled { background: #ccc; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="text-align:center; color:#333;">កត់ត្រាទិន្នន័យ</h2>
+    <h2 style="text-align:center; margin-top:0;">កត់ត្រាទិន្នន័យចុះវាល</h2>
     
     <video id="webcam" autoplay playsinline></video>
     <img id="preview">
 
     <div class="info-box">
-        <input type="text" id="customerName" placeholder="ឈ្មោះអតិថិជន...">
+        <input type="text" id="customerName" placeholder="បញ្ចូលឈ្មោះអតិថិជន...">
+        <div><strong>លេខរៀង:</strong> <span id="recordNo">1</span></div>
         <div><strong>កាលបរិច្ឆេទ:</strong> <span id="dateTime">--</span></div>
-        <div><strong>GPS:</strong> <span id="location">កំពុងស្វែងរក...</span></div>
+        <div><strong>ឈ្មោះតំបន់:</strong> <span id="addressText">កំពុងស្វែងរក...</span></div>
+        <div><strong>ទីតាំង GPS:</strong> <span id="location">--</span></div>
     </div>
     
     <div class="btn-group">
         <button id="capBtn" class="btn-capture" onclick="takeSnapshot()">ថតរូប និងចាប់ទិន្នន័យ</button>
-        <button id="saveBtn" class="btn-save" onclick="saveAllData()" disabled>រក្សាទុកជា File (Image + Text)</button>
-        <button id="resetBtn" class="btn-reset" onclick="resetCamera()" style="display:none;">ថតថ្មី</button>
-        <button class="btn-refresh" onclick="refreshApp()">ចាប់ផ្ដើមថ្មី (Refresh)</button>
+        <button id="saveBtn" class="btn-save" onclick="saveData()" disabled>រក្សាទុក (Image + Text)</button>
+        <button class="btn-refresh" onclick="window.location.reload()">Refresh / ចាប់ផ្ដើមថ្មី</button>
     </div>
 </div>
 
@@ -51,61 +54,76 @@
     const canvas = document.getElementById('hiddenCanvas');
     const dateTimeEl = document.getElementById('dateTime');
     const locationEl = document.getElementById('location');
+    const addressEl = document.getElementById('addressText');
+    const recordNoEl = document.getElementById('recordNo');
     const saveBtn = document.getElementById('saveBtn');
-    const capBtn = document.getElementById('capBtn');
-    const resetBtn = document.getElementById('resetBtn');
 
-    let capturedData = { img: null, name: "", time: "", gps: "" };
+    let currentLat, currentLon;
+    let recordCount = localStorage.getItem('lastID') ? parseInt(localStorage.getItem('lastID')) + 1 : 1;
+    recordNoEl.textContent = recordCount;
 
+    // ១. បើកកាមេរ៉ា
     async function initCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-        } catch (err) { alert("សូមអនុញ្ញាតកាមេរ៉ា!"); }
+        } catch (err) { alert("សូម Allow កាមេរ៉ា!"); }
     }
 
+    // ២. ម៉ោង និង GPS + បម្លែងជាឈ្មោះតំបន់ (Reverse Geocoding)
     setInterval(() => { dateTimeEl.textContent = new Date().toLocaleString('km-KH'); }, 1000);
+
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => {
-            locationEl.textContent = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        navigator.geolocation.watchPosition(async pos => {
+            currentLat = pos.coords.latitude;
+            currentLon = pos.coords.longitude;
+            locationEl.textContent = `${currentLat.toFixed(6)}, ${currentLon.toFixed(6)}`;
+
+            // ហៅ API ដើម្បីយកឈ្មោះតំបន់ (Address)
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLon}&accept-language=km`);
+                const data = await res.json();
+                addressEl.textContent = data.display_name || "មិនស្គាល់តំបន់";
+            } catch (e) { addressEl.textContent = "មិនអាចទាញយកឈ្មោះតំបន់"; }
         }, null, { enableHighAccuracy: true });
     }
 
+    // ៣. មុខងារថតរូប
     function takeSnapshot() {
-        const name = document.getElementById('customerName').value;
-        if (!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
-
+        if (!document.getElementById('customerName').value) {
+            alert("សូមបញ្ចូលឈ្មោះជាមុនសិន!");
+            return;
+        }
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        capturedData.img = canvas.toDataURL('image/jpeg');
-        capturedData.name = name;
-        capturedData.time = dateTimeEl.textContent;
-        capturedData.gps = locationEl.textContent;
-
-        preview.src = capturedData.img;
+        preview.src = canvas.toDataURL('image/jpeg');
         preview.style.display = 'block';
         video.style.display = 'none';
-        
         saveBtn.disabled = false;
-        capBtn.style.display = 'none';
-        resetBtn.style.display = 'block';
     }
 
-    function saveAllData() {
-        const fileName = `Customer_${capturedData.name}_${Date.now()}`;
+    // ៤. រក្សាទុកជា File
+    function saveData() {
+        const name = document.getElementById('customerName').value;
+        const fileName = `ID${recordCount}_${name}`;
+
+        // ទាញយករូបភាព
         const imgLink = document.createElement('a');
         imgLink.download = `${fileName}.jpg`;
-        imgLink.href = capturedData.img;
+        imgLink.href = preview.src;
         imgLink.click();
 
-        const textContent = `ព័ត៌មានអតិថិជន\n` +
+        // ទាញយក File អត្ថបទ
+        const textContent = `ព័ត៌មានការចុះវាល\n` +
                             `--------------------------\n` +
-                            `ឈ្មោះ: ${capturedData.name}\n` +
-                            `កាលបរិច្ឆេទ: ${capturedData.time}\n` +
-                            `ទីតាំង GPS: ${capturedData.gps}\n` +
+                            `លេខរៀង: ${recordCount}\n` +
+                            `កាលបរិច្ឆេទ: ${dateTimeEl.textContent}\n` +
+                            `ឈ្មោះអតិថិជន: ${name}\n` +
+                            `ឈ្មោះតំបន់: ${addressEl.textContent}\n` +
+                            `ទីតាំង GPS: ${locationEl.textContent}\n` +
                             `--------------------------`;
         
         const blob = new Blob([textContent], { type: 'text/plain' });
@@ -113,20 +131,11 @@
         textLink.download = `${fileName}.txt`;
         textLink.href = URL.createObjectURL(blob);
         textLink.click();
-    }
 
-    function resetCamera() {
-        video.style.display = 'block';
-        preview.style.display = 'none';
-        saveBtn.disabled = true;
-        capBtn.style.display = 'block';
-        resetBtn.style.display = 'none';
-    }
-
-    function refreshApp() {
-        if (confirm("តើអ្នកចង់សម្អាតទិន្នន័យ និងចាប់ផ្ដើមថ្មីមែនទេ?")) {
-            window.location.reload();
-        }
+        // រក្សាទុកលេខរៀងចូល LocalStorage
+        localStorage.setItem('lastID', recordCount);
+        alert("រក្សាទុកបានជោគជ័យ!");
+        window.location.reload();
     }
 
     initCamera();
