@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Restore Added</title>
+    <title>Field Capture Pro - Full Options</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -20,17 +20,21 @@
         
         .btn-capture { background: var(--success); color: white; width: 100%; font-size: 1.1rem; padding: 12px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Kantumruy Pro'; }
         
-        .tools { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; }
         .tools input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; }
-        #textSearch { flex: 2; min-width: 200px; }
-        #dateSearch { flex: 1; min-width: 150px; }
+        #textSearch { flex: 2; min-width: 180px; }
+        #dateSearch { flex: 1; min-width: 140px; }
 
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.85rem; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85rem; }
         th { background: var(--primary); color: white; }
         
-        .img-cell { width: 80px; height: 60px; object-fit: cover; border-radius: 5px; }
+        .img-cell { width: 70px; height: 55px; object-fit: cover; border-radius: 4px; }
+
+        /* Modal Style */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; z-index: 1000; border-radius: 10px; width: 85%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
     </style>
 </head>
 <body>
@@ -49,36 +53,41 @@
 <div class="tools">
     <input type="text" id="textSearch" placeholder="🔍 ស្វែងរកអាសយដ្ឋាន..." onkeyup="loadTable()">
     <input type="date" id="dateSearch" onchange="loadTable()">
-    
-    <button style="background: var(--danger); color:white; border:none; border-radius:5px; padding:0 15px; cursor:pointer;" onclick="deleteSelected()">🗑️ លុប</button>
-    
-    <button style="background: #2c3e50; color:white; border:none; border-radius:5px; padding:0 15px; cursor:pointer;" onclick="backupData()">💾 Backup</button>
-    <button style="background: #6c757d; color:white; border:none; border-radius:5px; padding:0 15px; cursor:pointer;" onclick="document.getElementById('importFile').click()">📥 Restore</button>
+    <button style="background: var(--danger); color:white; border:none; border-radius:5px; padding:0 12px; cursor:pointer;" onclick="deleteSelected()">🗑️ លុប</button>
+    <button style="background: #2c3e50; color:white; border:none; border-radius:5px; padding:0 12px; cursor:pointer;" onclick="backupData()">💾 Backup</button>
+    <button style="background: #6c757d; color:white; border:none; border-radius:5px; padding:0 12px; cursor:pointer;" onclick="document.getElementById('importFile').click()">📥 Restore</button>
     <input type="file" id="importFile" style="display:none" onchange="restoreData(event)">
 </div>
 
 <div id="reportArea">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
         <h3 style="margin:0;">របាយការណ៍សកម្មភាព</h3>
-        <div style="display:flex; gap:10px;">
-            <button style="background:#1d6f42; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;" onclick="exportToExcel()">📊 Excel</button>
-            <button style="background:#ad0b00; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;" onclick="exportToPDF()">📄 PDF (Khmer)</button>
+        <div style="display:flex; gap:8px;">
+            <button style="background:#1d6f42; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;" onclick="exportToExcel()">📊 Excel</button>
+            <button style="background:#ad0b00; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;" onclick="exportToPDF()">📄 PDF (Khmer)</button>
         </div>
     </div>
     <table id="dataTable">
         <thead>
             <tr>
                 <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                <th style="width: 60px;">ID</th>
+                <th style="width: 50px;">ID</th>
                 <th style="width: 110px;">ថ្ងៃ/ម៉ោង</th>
                 <th>អាសយដ្ឋាន</th>
-                <th style="width: 80px;">GPS</th>
-                <th style="width: 100px;">រូបភាព</th>
-                <th style="width: 80px;">សកម្មភាព</th>
+                <th style="width: 60px;">GPS</th>
+                <th style="width: 80px;">រូបភាព</th>
+                <th style="width: 100px;">សកម្មភាព</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeModal()"></div>
+<div id="editModal" class="modal">
+    <h4 style="margin-top:0;">កែសម្រួលអាសយដ្ឋាន</h4>
+    <textarea id="editAddr" style="width:100%; height:100px; font-family:'Kantumruy Pro'; padding:8px; border:1px solid #ccc; border-radius:5px; box-sizing: border-box;"></textarea>
+    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; border:none; padding:10px; border-radius:5px; margin-top:10px; cursor:pointer; font-family:'Kantumruy Pro';">រក្សាទុកការកែប្រែ</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -103,7 +112,7 @@
                 const data = await res.json();
                 currentAddress = data.display_name || "មិនស្គាល់ទីតាំង";
             }, null, { enableHighAccuracy: true });
-        } catch (e) { console.log("Camera access denied"); }
+        } catch (e) { console.log("Hardware access error"); }
     }
 
     function captureAndSave() {
@@ -131,8 +140,8 @@
             let data = e.target.result;
             if (dateInput) {
                 const [y, m, d] = dateInput.split('-');
-                const formattedSearchDate = `${parseInt(d)}/${parseInt(m)}/${y}`;
-                data = data.filter(i => i.date === formattedSearchDate);
+                const formattedDate = `${parseInt(d)}/${parseInt(m)}/${y}`;
+                data = data.filter(i => i.date === formattedDate);
             }
             data.reverse().filter(i => i.address.toLowerCase().includes(textQ)).forEach(item => {
                 tbody.innerHTML += `<tr>
@@ -140,11 +149,40 @@
                     <td>${item.id}</td>
                     <td>${item.date}<br>${item.time}</td>
                     <td style="font-size:0.75rem;">${item.address}</td>
-                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank">📍</a></td>
+                    <td style="text-align:center;"><a href="http://googleusercontent.com/maps.google.com/7{item.gps}" target="_blank">📍</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
-                    <td><button style="background:var(--danger); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;" onclick="deleteSingle(${item.id})">លុប</button></td>
+                    <td>
+                        <button style="background:var(--primary); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;" onclick="openEdit(${item.id},'${item.address.replace(/'/g,"\\'")}')">📝</button>
+                        <button style="background:var(--danger); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;" onclick="deleteSingle(${item.id})">🗑️</button>
+                    </td>
                 </tr>`;
             });
+        };
+    }
+
+    // --- មុខងារ Edit ---
+    let editId;
+    function openEdit(id, address) {
+        editId = id;
+        document.getElementById('editAddr').value = address;
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+    }
+    function updateData() {
+        const tx = db.transaction("records", "readwrite");
+        const store = tx.objectStore("records");
+        store.get(editId).onsuccess = e => {
+            const data = e.target.result;
+            data.address = document.getElementById('editAddr').value;
+            store.put(data);
+            tx.oncomplete = () => {
+                closeModal();
+                loadTable();
+            };
         };
     }
 
@@ -154,7 +192,7 @@
         tx.objectStore("records").getAll().onsuccess = e => {
             const data = e.target.result;
             const pdfView = document.createElement('div');
-            pdfView.style.cssText = "font-family:'Kantumruy Pro'; padding:30px; width:1000px; background:white; color: black;";
+            pdfView.style.cssText = "font-family:'Kantumruy Pro'; padding:30px; width:1000px; background:white; color:black;";
             pdfView.innerHTML = `<h2 style="text-align:center;">របាយការណ៍សកម្មភាពចុះវាល</h2>
                 <table style="width:100%; border-collapse:collapse; font-size:12px;">
                     <thead><tr style="background:#f2f2f2;"><th style="border:1px solid #333; padding:10px;">ID</th><th style="border:1px solid #333; padding:10px;">ថ្ងៃ/ម៉ោង</th><th style="border:1px solid #333; padding:10px;">អាសយដ្ឋាន</th><th style="border:1px solid #333; padding:10px;">GPS</th><th style="border:1px solid #333; padding:10px;">រូបភាព</th></tr></thead>
@@ -180,33 +218,19 @@
         };
     }
 
-    // មុខងារ Backup & Restore
     function backupData() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            const blob = new Blob([JSON.stringify(e.target.result)], {type:"application/json"});
-            saveAs(blob, `Backup_FieldCapture.json`);
+            saveAs(new Blob([JSON.stringify(e.target.result)], {type:"application/json"}), "Backup.json");
         };
     }
 
     function restoreData(event) {
         const reader = new FileReader();
         reader.onload = e => {
-            try {
-                const data = JSON.parse(e.target.result);
-                const tx = db.transaction("records", "readwrite");
-                const store = tx.objectStore("records");
-                data.forEach(item => {
-                    // លុប ID ចាស់ដើម្បីឱ្យវាបង្កើត ID ថ្មីមិនជាន់គ្នា ឬរក្សាទុកតាមចិត្ត
-                    delete item.id; 
-                    store.add(item);
-                });
-                tx.oncomplete = () => {
-                    alert("ទាញយកទិន្នន័យ (Restore) រួចរាល់!");
-                    loadTable();
-                };
-            } catch (err) {
-                alert("File មិនត្រឹមត្រូវ!");
-            }
+            const data = JSON.parse(e.target.result);
+            const tx = db.transaction("records", "readwrite");
+            data.forEach(item => { delete item.id; tx.objectStore("records").add(item); });
+            tx.oncomplete = () => { alert("Restore រួចរាល់!"); loadTable(); };
         };
         reader.readAsText(event.target.files[0]);
     }
