@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Full Options Fixed</title>
+    <title>Field Capture Pro - Final Fix</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -14,19 +14,23 @@
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #f39c12; }
         body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f7; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         
+        /* ក្បាលម៉ាស៊ីនថត */
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; margin-bottom: 15px; }
         video { width: 100%; border-radius: 8px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid var(--primary); }
         
+        .nav-btns { display: flex; gap: 8px; width: 100%; max-width: 1000px; margin-bottom: 10px; }
+        .btn-back { background: #6c757d; color: white; display: flex; align-items: center; gap: 5px; }
+
         .search-section { width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; flex: 1; min-width: 150px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; flex: 1; }
         
-        button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; }
+        button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; font-size: 0.9rem; }
         .btn-capture { background: var(--success); color: white; width: 100%; font-size: 1.1rem; margin-top: 10px; }
         
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85rem; }
-        th { background: var(--primary); color: white; position: sticky; top: 0; }
+        th { background: var(--primary); color: white; }
         .img-cell { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; z-index: 1000; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 0 30px rgba(0,0,0,0.3); }
@@ -35,6 +39,10 @@
 </head>
 <body>
 
+<div class="nav-btns">
+    <button class="btn-back" onclick="window.history.back()">⬅️ ថយក្រោយ (Back)</button>
+</div>
+
 <div class="card">
     <video id="webcam" autoplay playsinline muted></video>
     <div id="gpsStatus" style="font-size: 0.75rem; color: #666; margin-top: 5px;">📍 កំពុងស្វែងរក GPS...</div>
@@ -42,21 +50,15 @@
     
     <div style="display:flex; gap:8px; margin-top:10px;">
         <button style="background: var(--warning); color:white; flex:1" onclick="location.reload()">🔄 Refresh</button>
-        <button style="background: #6c757d; color:white; flex:1" onclick="stopHardware()">✖ Close Cam</button>
-    </div>
-
-    <div style="display:flex; gap:8px; margin-top:8px;">
-        <button style="background: #444; color:white; flex:1; font-size: 0.7rem;" onclick="backupData()">💾 Backup (JSON)</button>
-        <button style="background: #444; color:white; flex:1; font-size: 0.7rem;" onclick="document.getElementById('importFile').click()">📥 Restore</button>
-        <input type="file" id="importFile" style="display:none" onchange="restoreData(event)">
+        <button style="background: #444; color:white; flex:1" onclick="stopHardware()">✖ Close Cam</button>
     </div>
 </div>
 
 <div class="search-section">
     <input type="text" id="textSearch" placeholder="🔍 ស្វែងរកអាសយដ្ឋាន ឬ ID..." onkeyup="loadTable()">
     <input type="date" id="dateSearch" onchange="loadTable()">
-    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបដែលរើស</button>
-    <button style="background: #eee; color:#333;" onclick="resetSearch()">🧹 Clear</button>
+    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបចោល</button>
+    <button style="background: #444; color:white;" onclick="backupData()">💾 Backup</button>
 </div>
 
 <div id="reportArea">
@@ -86,8 +88,8 @@
 <div class="overlay" id="overlay" onclick="closeModal()"></div>
 <div id="editModal" class="modal">
     <h4>កែសម្រួលអាសយដ្ឋាន</h4>
-    <textarea id="editAddr" style="width:100%; height:100px; padding:10px; font-family:'Kantumruy Pro'; border-radius:5px; border:1px solid #ccc;"></textarea>
-    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; margin-top:15px;">Update</button>
+    <textarea id="editAddr" style="width:100%; height:100px; font-family:'Kantumruy Pro';"></textarea>
+    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; margin-top:15px;">រក្សាទុក</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -146,47 +148,57 @@
             data.reverse().filter(i => i.address.toLowerCase().includes(tQ) || `id-${i.id}`.toLowerCase().includes(tQ)).forEach(item => {
                 tbody.innerHTML += `<tr>
                     <td><input type="checkbox" class="row-select" value="${item.id}"></td>
-                    <td>ID-${item.id}</td>
-                    <td>${item.date}<br>${item.time}</td>
+                    <td>ID-${item.id}</td><td>${item.date}<br>${item.time}</td>
                     <td style="font-size:0.75rem;">${item.address}</td>
-                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" style="text-decoration:none;">📍 Map</a></td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank">📍</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
                     <td>
                         <button onclick="openEdit(${item.id},'${item.address.replace(/'/g,"\\'")}')">📝</button>
-                        <button style="background:var(--danger); color:white;" onclick="deleteSingle(${item.id})">🗑️</button>
+                        <button style="background:var(--danger); color:white; padding:5px;" onclick="deleteSingle(${item.id})">🗑️</button>
                     </td>
                 </tr>`;
             });
         };
     }
 
-    // PDF ខ្មែរមិនដាច់ជួរ
+    // --- មុខងារ PDF ស្គាល់ Font ខ្មែរ ១០០% និងមិនដាច់ជួរ ---
     async function exportToPDF() {
         const tx = db.transaction("records", "readonly");
         tx.objectStore("records").getAll().onsuccess = e => {
             const data = e.target.result;
             const container = document.createElement('div');
-            container.style.cssText = "font-family:'Kantumruy Pro'; padding:15px; width:1000px; background:white;";
-            container.innerHTML = `<h3 style="text-align:center">របាយការណ៍សកម្មភាពចុះវាល</h3>
-                <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout: fixed;">
-                    <thead><tr style="background:#eee">
-                        <th style="border:1px solid #000; width:40px">ID</th><th style="border:1px solid #000; width:90px">ថ្ងៃ/ម៉ោង</th>
-                        <th style="border:1px solid #000">អាសយដ្ឋាន</th><th style="border:1px solid #000; width:110px">GPS</th><th style="border:1px solid #000; width:120px">រូបភាព</th>
+            // បន្ថែម Font Kantumruy Pro ទៅក្នុង Container ផ្ទាល់
+            container.style.cssText = "font-family:'Kantumruy Pro', sans-serif; padding:20px; width:1000px; background:white; color: black;";
+            container.innerHTML = `
+                <h2 style="text-align:center; margin-bottom: 20px;">របាយការណ៍សកម្មភាពចុះវាល</h2>
+                <table style="width:100%; border-collapse:collapse; font-size:11px; table-layout: fixed;">
+                    <thead><tr style="background:#f2f2f2">
+                        <th style="border:1px solid #333; width:40px; padding:8px;">ID</th>
+                        <th style="border:1px solid #333; width:100px; padding:8px;">ថ្ងៃ/ម៉ោង</th>
+                        <th style="border:1px solid #333; padding:8px;">អាសយដ្ឋាន</th>
+                        <th style="border:1px solid #333; width:100px; padding:8px;">GPS</th>
+                        <th style="border:1px solid #333; width:130px; padding:8px;">រូបភាព</th>
                     </tr></thead>
                     <tbody>${data.reverse().map(i => `<tr>
-                        <td style="border:1px solid #000; text-align:center">${i.id}</td>
-                        <td style="border:1px solid #000">${i.date}<br>${i.time}</td>
-                        <td style="border:1px solid #000; word-wrap:break-word; padding:5px;">${i.address}</td>
-                        <td style="border:1px solid #000; text-align:center">${i.gps}</td>
-                        <td style="border:1px solid #000; text-align:center"><img src="${i.image}" style="width:100px; padding:2px"></td>
+                        <td style="border:1px solid #333; text-align:center; padding:8px;">${i.id}</td>
+                        <td style="border:1px solid #333; padding:8px;">${i.date}<br>${i.time}</td>
+                        <td style="border:1px solid #333; word-wrap:break-word; padding:8px;">${i.address}</td>
+                        <td style="border:1px solid #333; text-align:center; padding:8px;">${i.gps}</td>
+                        <td style="border:1px solid #333; text-align:center; padding:5px;"><img src="${i.image}" style="width:110px;"></td>
                     </tr>`).join('')}</tbody>
                 </table>`;
+            
             document.body.appendChild(container);
-            html2pdf().set({ margin:0.2, filename:'Report.pdf', html2canvas:{scale:2}, jsPDF:{orientation:'landscape'} }).from(container).save().then(()=>container.remove());
+            const opt = {
+                margin: 0.3,
+                filename: 'Field_Report_Khmer.pdf',
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(container).save().then(() => container.remove());
         };
     }
 
-    // Excel Fix Unknown
     async function exportToExcel() {
         const workbook = new ExcelJS.Workbook();
         const ws = workbook.addWorksheet('Report');
@@ -194,8 +206,7 @@
         db.transaction("records").objectStore("records").getAll().onsuccess = async e => {
             const d = e.target.result.reverse();
             for(let i=0; i<d.length; i++) {
-                const row = ws.addRow({id:d[i].id, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
-                row.getCell('gps').value = { text: '📍 '+d[i].gps, hyperlink: 'https://www.google.com/maps?q='+d[i].gps };
+                ws.addRow({id:d[i].id, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
                 const imgId = workbook.addImage({ base64:d[i].image, extension:'jpeg' });
                 ws.addImage(imgId, { tl:{col:5, row:i+1}, ext:{width:100, height:75} });
                 ws.getRow(i+2).height = 60;
@@ -204,25 +215,13 @@
         };
     }
 
-    // Backup & Restore
     function backupData() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             const blob = new Blob([JSON.stringify(e.target.result)], {type:"application/json"});
             saveAs(blob, `Backup_FieldCapture.json`);
         };
     }
-    function restoreData(event) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const data = JSON.parse(e.target.result);
-            const tx = db.transaction("records", "readwrite");
-            data.forEach(item => { delete item.id; tx.objectStore("records").add(item); });
-            tx.oncomplete = () => { alert("ស្តារជោគជ័យ!"); loadTable(); };
-        };
-        reader.readAsText(event.target.files[0]);
-    }
 
-    // Controls
     let editId;
     function openEdit(id, a) { editId=id; document.getElementById('editAddr').value=a; document.getElementById('editModal').style.display='block'; document.getElementById('overlay').style.display='block'; }
     function closeModal() { document.getElementById('editModal').style.display='none'; document.getElementById('overlay').style.display='none'; }
@@ -244,12 +243,7 @@
             tx.oncomplete = () => { loadTable(); document.getElementById('selectAll').checked = false; };
         }
     }
-    function resetSearch() { document.getElementById('textSearch').value=""; document.getElementById('dateSearch').value=""; loadTable(); }
-    function stopHardware() { 
-        if(stream) stream.getTracks().forEach(t => t.stop()); 
-        if(watchID) navigator.geolocation.clearWatch(watchID);
-        document.getElementById('gpsStatus').innerText = "✖ ឈប់ដំណើរការ";
-    }
+    function stopHardware() { if(stream) stream.getTracks().forEach(t => t.stop()); }
 </script>
 </body>
 </html>
