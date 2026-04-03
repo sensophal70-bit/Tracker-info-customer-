@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Final Fix</title>
+    <title>Field Capture Pro - Full Options Fixed</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -14,23 +14,22 @@
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #f39c12; }
         body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f7; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; margin-bottom: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; margin-bottom: 15px; }
         video { width: 100%; border-radius: 8px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid var(--primary); }
         
-        .search-section { width: 100%; max-width: 1000px; background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; flex: 1; }
+        .search-section { width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; flex: 1; min-width: 150px; }
         
-        button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; font-size: 0.85rem; }
-        .btn-capture { background: var(--success); color: white; width: 100%; font-size: 1rem; margin-top: 8px; }
+        button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; }
+        .btn-capture { background: var(--success); color: white; width: 100%; font-size: 1.1rem; margin-top: 10px; }
         
-        #reportArea { width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 8px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 850px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.8rem; }
-        th { background: var(--primary); color: white; }
-        .img-cell { width: 60px; height: 45px; object-fit: cover; border-radius: 3px; }
+        #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85rem; }
+        th { background: var(--primary); color: white; position: sticky; top: 0; }
+        .img-cell { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
 
-        .backup-btns { margin-top: 10px; display: flex; gap: 5px; justify-content: center; width: 100%; }
-        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; z-index: 1000; border-radius: 10px; width: 85%; max-width: 350px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; z-index: 1000; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 0 30px rgba(0,0,0,0.3); }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
     </style>
 </head>
@@ -38,34 +37,46 @@
 
 <div class="card">
     <video id="webcam" autoplay playsinline muted></video>
-    <div id="gpsStatus" style="font-size: 0.7rem; color: #666; margin-top: 5px;">📍 កំពុងស្វែងរក GPS...</div>
+    <div id="gpsStatus" style="font-size: 0.75rem; color: #666; margin-top: 5px;">📍 កំពុងស្វែងរក GPS...</div>
     <button class="btn-capture" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
-    <div class="backup-btns">
-        <button style="background: var(--warning); color:white;" onclick="backupData()">💾 Backup ទិន្នន័យ</button>
-        <button style="background: #6c757d; color:white;" onclick="document.getElementById('importFile').click()">📥 Restore</button>
+    
+    <div style="display:flex; gap:8px; margin-top:10px;">
+        <button style="background: var(--warning); color:white; flex:1" onclick="location.reload()">🔄 Refresh</button>
+        <button style="background: #6c757d; color:white; flex:1" onclick="stopHardware()">✖ Close Cam</button>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:8px;">
+        <button style="background: #444; color:white; flex:1; font-size: 0.7rem;" onclick="backupData()">💾 Backup (JSON)</button>
+        <button style="background: #444; color:white; flex:1; font-size: 0.7rem;" onclick="document.getElementById('importFile').click()">📥 Restore</button>
         <input type="file" id="importFile" style="display:none" onchange="restoreData(event)">
     </div>
 </div>
 
 <div class="search-section">
-    <input type="text" id="textSearch" placeholder="🔍 ស្វែងរក..." onkeyup="loadTable()">
+    <input type="text" id="textSearch" placeholder="🔍 ស្វែងរកអាសយដ្ឋាន ឬ ID..." onkeyup="loadTable()">
     <input type="date" id="dateSearch" onchange="loadTable()">
-    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុប</button>
+    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបដែលរើស</button>
+    <button style="background: #eee; color:#333;" onclick="resetSearch()">🧹 Clear</button>
 </div>
 
 <div id="reportArea">
-    <div style="display:flex; justify-content: space-between; margin-bottom:10px;">
-        <h4 style="margin:0;">តារាងសកម្មភាព</h4>
-        <div>
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+        <h3 style="margin:0;">របាយការណ៍សកម្មភាព</h3>
+        <div style="display:flex; gap:8px;">
             <button style="background:#1d6f42; color:white;" onclick="exportToExcel()">📊 Excel</button>
-            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 PDF (Khmer Fixed)</button>
+            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 PDF (Khmer)</button>
         </div>
     </div>
     <table id="dataTable">
         <thead>
             <tr>
-                <th><input type="checkbox" id="selectAll" onclick="toggleAll()"></th>
-                <th>ID</th><th>ថ្ងៃ/ម៉ោង</th><th>អាសយដ្ឋាន</th><th>GPS</th><th>រូបភាព</th><th>កែ</th>
+                <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 110px;">ថ្ងៃ/ម៉ោង</th>
+                <th>អាសយដ្ឋាន</th>
+                <th style="width: 80px;">GPS</th>
+                <th style="width: 90px;">រូបភាព</th>
+                <th style="width: 80px;">កែ/លុប</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -73,10 +84,10 @@
 </div>
 
 <div class="overlay" id="overlay" onclick="closeModal()"></div>
-<div id="editModal">
-    <h4>កែអាសយដ្ឋាន</h4>
-    <textarea id="editAddr" style="width:100%; height:80px;"></textarea>
-    <button onclick="updateData()" style="background:var(--success); color:white; width:100%; margin-top:10px;">Update</button>
+<div id="editModal" class="modal">
+    <h4>កែសម្រួលអាសយដ្ឋាន</h4>
+    <textarea id="editAddr" style="width:100%; height:100px; padding:10px; font-family:'Kantumruy Pro'; border-radius:5px; border:1px solid #ccc;"></textarea>
+    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; margin-top:15px;">Update</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -95,14 +106,14 @@
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
             video.onloadedmetadata = () => video.play();
-            navigator.geolocation.watchPosition(async pos => {
+            watchID = navigator.geolocation.watchPosition(async pos => {
                 lat = pos.coords.latitude; lon = pos.coords.longitude;
                 document.getElementById('gpsStatus').innerText = `📍 GPS: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
                 const data = await res.json();
                 currentAddress = data.display_name || "មិនស្គាល់ទីតាំង";
             }, null, { enableHighAccuracy: true });
-        } catch (e) { alert("សូមបើក Camera/GPS"); }
+        } catch (e) { alert("សូមបើក Camera និង GPS"); }
     }
 
     function captureAndSave() {
@@ -115,111 +126,130 @@
             time: new Date().toLocaleTimeString('km-KH'),
             address: currentAddress,
             gps: `${lat.toFixed(6)},${lon.toFixed(6)}`,
-            image: canvas.toDataURL('image/jpeg', 0.5)
+            image: canvas.toDataURL('image/jpeg', 0.6)
         });
         tx.oncomplete = () => loadTable();
     }
 
     function loadTable() {
         const tQ = document.getElementById('textSearch').value.toLowerCase();
+        const dQ = document.getElementById('dateSearch').value;
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
-            e.target.result.reverse().filter(i => i.address.toLowerCase().includes(tQ)).forEach(item => {
+            let data = e.target.result;
+            if (dQ) {
+                const [y, m, d] = dQ.split('-');
+                const fD = `${parseInt(d)}/${parseInt(m)}/${y}`;
+                data = data.filter(i => i.date === fD);
+            }
+            data.reverse().filter(i => i.address.toLowerCase().includes(tQ) || `id-${i.id}`.toLowerCase().includes(tQ)).forEach(item => {
                 tbody.innerHTML += `<tr>
                     <td><input type="checkbox" class="row-select" value="${item.id}"></td>
-                    <td>${item.id}</td><td>${item.date}<br>${item.time}</td>
-                    <td style="width:300px">${item.address}</td>
-                    <td><a href="https://maps.google.com/?q=${item.gps}" target="_blank">📍</a></td>
+                    <td>ID-${item.id}</td>
+                    <td>${item.date}<br>${item.time}</td>
+                    <td style="font-size:0.75rem;">${item.address}</td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" style="text-decoration:none;">📍 Map</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
-                    <td><button onclick="openEdit(${item.id},'${item.address.replace(/'/g,"")}')">📝</button></td>
+                    <td>
+                        <button onclick="openEdit(${item.id},'${item.address.replace(/'/g,"\\'")}')">📝</button>
+                        <button style="background:var(--danger); color:white;" onclick="deleteSingle(${item.id})">🗑️</button>
+                    </td>
                 </tr>`;
             });
         };
     }
 
-    // --- FIX PDF KHMER FONT ---
+    // PDF ខ្មែរមិនដាច់ជួរ
     async function exportToPDF() {
         const tx = db.transaction("records", "readonly");
         tx.objectStore("records").getAll().onsuccess = e => {
             const data = e.target.result;
             const container = document.createElement('div');
             container.style.cssText = "font-family:'Kantumruy Pro'; padding:15px; width:1000px; background:white;";
-            container.innerHTML = `<h3 style="text-align:center">របាយការណ៍សកម្មភាព</h3>
-                <table style="width:100%; border-collapse:collapse; font-size:10px;">
-                    <tr style="background:#eee">
-                        <th style="border:1px solid #000">ID</th><th style="border:1px solid #000">ថ្ងៃ/ម៉ោង</th>
-                        <th style="border:1px solid #000">អាសយដ្ឋាន</th><th style="border:1px solid #000">GPS</th><th style="border:1px solid #000">រូបភាព</th>
-                    </tr>
-                    ${data.reverse().map(i => `<tr>
+            container.innerHTML = `<h3 style="text-align:center">របាយការណ៍សកម្មភាពចុះវាល</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:10px; table-layout: fixed;">
+                    <thead><tr style="background:#eee">
+                        <th style="border:1px solid #000; width:40px">ID</th><th style="border:1px solid #000; width:90px">ថ្ងៃ/ម៉ោង</th>
+                        <th style="border:1px solid #000">អាសយដ្ឋាន</th><th style="border:1px solid #000; width:110px">GPS</th><th style="border:1px solid #000; width:120px">រូបភាព</th>
+                    </tr></thead>
+                    <tbody>${data.reverse().map(i => `<tr>
                         <td style="border:1px solid #000; text-align:center">${i.id}</td>
                         <td style="border:1px solid #000">${i.date}<br>${i.time}</td>
-                        <td style="border:1px solid #000; width:350px">${i.address}</td>
+                        <td style="border:1px solid #000; word-wrap:break-word; padding:5px;">${i.address}</td>
                         <td style="border:1px solid #000; text-align:center">${i.gps}</td>
-                        <td style="border:1px solid #000; text-align:center"><img src="${i.image}" style="width:80px"></td>
-                    </tr>`).join('')}
+                        <td style="border:1px solid #000; text-align:center"><img src="${i.image}" style="width:100px; padding:2px"></td>
+                    </tr>`).join('')}</tbody>
                 </table>`;
             document.body.appendChild(container);
-            html2pdf().set({ margin:0.2, filename:'Report.pdf', html2canvas:{scale:2, useCORS:true}, jsPDF:{orientation:'landscape'} }).from(container).save().then(()=>container.remove());
+            html2pdf().set({ margin:0.2, filename:'Report.pdf', html2canvas:{scale:2}, jsPDF:{orientation:'landscape'} }).from(container).save().then(()=>container.remove());
         };
     }
 
+    // Excel Fix Unknown
     async function exportToExcel() {
         const workbook = new ExcelJS.Workbook();
         const ws = workbook.addWorksheet('Report');
-        ws.columns = [{header:'ID',key:'id',width:10},{header:'ថ្ងៃ',key:'date',width:15},{header:'ម៉ោង',key:'time',width:15},{header:'អាសយដ្ឋាន',key:'address',width:50},{header:'GPS',key:'gps',width:25}];
+        ws.columns = [{header:'ID',key:'id',width:10},{header:'ថ្ងៃ',key:'date',width:15},{header:'ម៉ោង',key:'time',width:15},{header:'អាសយដ្ឋាន',key:'address',width:60},{header:'GPS',key:'gps',width:25}];
         db.transaction("records").objectStore("records").getAll().onsuccess = async e => {
             const d = e.target.result.reverse();
             for(let i=0; i<d.length; i++) {
-                ws.addRow({id:d[i].id, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
+                const row = ws.addRow({id:d[i].id, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
+                row.getCell('gps').value = { text: '📍 '+d[i].gps, hyperlink: 'https://www.google.com/maps?q='+d[i].gps };
                 const imgId = workbook.addImage({ base64:d[i].image, extension:'jpeg' });
                 ws.addImage(imgId, { tl:{col:5, row:i+1}, ext:{width:100, height:75} });
                 ws.getRow(i+2).height = 60;
             }
-            saveAs(new Blob([await workbook.xlsx.writeBuffer()]), "Report.xlsx");
+            saveAs(new Blob([await workbook.xlsx.writeBuffer()]), "Field_Report.xlsx");
         };
     }
 
-    // --- BACKUP & RESTORE (កុំឱ្យបាត់ File) ---
+    // Backup & Restore
     function backupData() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             const blob = new Blob([JSON.stringify(e.target.result)], {type:"application/json"});
-            saveAs(blob, `Backup_FieldData_${new Date().toLocaleDateString()}.json`);
+            saveAs(blob, `Backup_FieldCapture.json`);
         };
     }
-
     function restoreData(event) {
         const reader = new FileReader();
         reader.onload = e => {
             const data = JSON.parse(e.target.result);
             const tx = db.transaction("records", "readwrite");
             data.forEach(item => { delete item.id; tx.objectStore("records").add(item); });
-            tx.oncomplete = () => { alert("ស្តារទិន្នន័យបានជោគជ័យ!"); loadTable(); };
+            tx.oncomplete = () => { alert("ស្តារជោគជ័យ!"); loadTable(); };
         };
         reader.readAsText(event.target.files[0]);
     }
 
+    // Controls
+    let editId;
+    function openEdit(id, a) { editId=id; document.getElementById('editAddr').value=a; document.getElementById('editModal').style.display='block'; document.getElementById('overlay').style.display='block'; }
+    function closeModal() { document.getElementById('editModal').style.display='none'; document.getElementById('overlay').style.display='none'; }
+    function updateData() {
+        const tx = db.transaction("records", "readwrite");
+        const store = tx.objectStore("records");
+        store.get(editId).onsuccess = e => {
+            const d = e.target.result; d.address = document.getElementById('editAddr').value;
+            store.put(d); tx.oncomplete = () => { closeModal(); loadTable(); };
+        };
+    }
+    function deleteSingle(id) { if(confirm("លុប ID-"+id+"?")) db.transaction("records", "readwrite").objectStore("records").delete(id).onsuccess = () => loadTable(); }
+    function toggleSelectAll() { const c = document.getElementById('selectAll').checked; document.querySelectorAll('.row-select').forEach(cb => cb.checked = c); }
     function deleteSelected() {
         const s = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => parseInt(cb.value));
         if(s.length && confirm(`លុប ${s.length} ជួរ?`)) {
             const tx = db.transaction("records", "readwrite");
             s.forEach(id => tx.objectStore("records").delete(id));
-            tx.oncomplete = () => loadTable();
+            tx.oncomplete = () => { loadTable(); document.getElementById('selectAll').checked = false; };
         }
     }
-
-    let currentEditId;
-    function openEdit(id, a) { currentEditId=id; document.getElementById('editAddr').value=a; document.getElementById('editModal').style.display='block'; document.getElementById('overlay').style.display='block'; }
-    function closeModal() { document.getElementById('editModal').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    function updateData() {
-        const tx = db.transaction("records", "readwrite");
-        const store = tx.objectStore("records");
-        store.get(currentEditId).onsuccess = e => {
-            const d = e.target.result; d.address = document.getElementById('editAddr').value;
-            store.put(d); tx.oncomplete = () => { closeModal(); loadTable(); };
-        };
+    function resetSearch() { document.getElementById('textSearch').value=""; document.getElementById('dateSearch').value=""; loadTable(); }
+    function stopHardware() { 
+        if(stream) stream.getTracks().forEach(t => t.stop()); 
+        if(watchID) navigator.geolocation.clearWatch(watchID);
+        document.getElementById('gpsStatus').innerText = "✖ ឈប់ដំណើរការ";
     }
-    function toggleAll() { const c = document.getElementById('selectAll').checked; document.querySelectorAll('.row-select').forEach(cb => cb.checked = c); }
 </script>
 </body>
 </html>
