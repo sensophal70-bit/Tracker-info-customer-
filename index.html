@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Full Features Fixed</title>
+    <title>Field Capture Pro - Camera Fixed</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -24,7 +24,7 @@
         .btn-save { background: var(--success); color: white; font-size: 1.1rem; width: 100%; margin-top: 10px; }
         
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 850px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 900px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: var(--primary); color: white; position: sticky; top: 0; }
         .img-cell { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
@@ -36,9 +36,9 @@
 <body>
 
 <div class="card">
-    <video id="webcam" autoplay playsinline></video>
+    <video id="webcam" autoplay playsinline muted></video>
     <div id="gpsStatus" style="font-size: 0.7rem; color: #666; margin-top: 5px;">📍 កំពុងស្វែងរក GPS...</div>
-    <button class="btn-save" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
+    <button class="btn-save" id="btnCapture" onclick="captureAndSave()">📷 ថតរូប និងរក្សាទុក</button>
     <div style="display:flex; gap:8px; margin-top:10px;">
         <button style="background: var(--warning); color:white; flex:1" onclick="location.reload()">🔄 Refresh</button>
         <button style="background: #6c757d; color:white; flex:1" onclick="stopHardware()">✖ បិទកាមេរ៉ា</button>
@@ -46,10 +46,10 @@
 </div>
 
 <div class="search-section">
-    <input type="text" id="textSearch" placeholder="🔍 ស្វែងរកតាម ID ឬ អាសយដ្ឋាន..." onkeyup="loadTable()" style="flex:2; min-width:200px;">
+    <input type="text" id="textSearch" placeholder="🔍 ស្វែងរក ID ឬ អាសយដ្ឋាន..." onkeyup="loadTable()" style="flex:2; min-width:200px;">
     <input type="date" id="dateSearch" onchange="loadTable()" style="flex:1; min-width:150px;">
-    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបដែលរើស</button>
-    <button style="background: #eee; color:#333;" onclick="resetSearch()">🧹 Clear</button>
+    <button style="background: var(--danger); color:white;" onclick="deleteSelected()">🗑️ លុបដែលជ្រើសរើស</button>
+    <button style="background: #eee; color:#333;" onclick="resetSearch()">🧹 Reset</button>
 </div>
 
 <div id="reportArea">
@@ -57,14 +57,19 @@
         <h3 style="margin:0;">របាយការណ៍សកម្មភាព</h3>
         <div style="display:flex; gap:8px;">
             <button style="background:#1d6f42; color:white;" onclick="exportToExcel()">📊 Excel (Fixed)</button>
-            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 PDF (មិនដាច់ជួរ)</button>
+            <button style="background:#ad0b00; color:white;" onclick="exportToPDF()">📄 PDF (Landscape)</button>
         </div>
     </div>
     <table id="dataTable">
         <thead>
             <tr>
                 <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                <th>ID</th><th>ថ្ងៃ/ម៉ោង</th><th>អាសយដ្ឋាន</th><th>GPS Link</th><th>រូបភាព</th><th>សកម្មភាព</th>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 100px;">ថ្ងៃ/ម៉ោង</th>
+                <th>អាសយដ្ឋាន</th>
+                <th style="width: 100px;">GPS Link</th>
+                <th style="width: 90px;">រូបភាព</th>
+                <th style="width: 100px;">សកម្មភាព</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -86,30 +91,51 @@
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('hiddenCanvas');
 
+    // បើក Database
     const request = indexedDB.open("FieldCaptureDB_V7", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("records", { keyPath: "id", autoIncrement: true }); };
     request.onsuccess = e => { db = e.target.result; loadTable(); startHardware(); };
 
+    // មុខងារបើកកាមេរ៉ា និង GPS
     async function startHardware() {
+        // បើកកាមេរ៉ា
+        const constraints = { video: { facingMode: "environment" }, audio: false };
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
+            // ធានាថាកាមេរ៉ានឹង Play
+            video.onloadedmetadata = () => video.play();
+        } catch (err) {
+            console.error("Camera error:", err);
+            document.getElementById('gpsStatus').innerText = "❌ មិនអាចបើកកាមេរ៉ាបានទេ";
+            alert("សូមអនុញ្ញាត (Allow) ការប្រើកាមេរ៉ាក្នុង Browser របស់អ្នក");
+        }
+
+        // បើក GPS
+        if (navigator.geolocation) {
             watchID = navigator.geolocation.watchPosition(async pos => {
-                lat = pos.coords.latitude; lon = pos.coords.longitude;
+                lat = pos.coords.latitude; 
+                lon = pos.coords.longitude;
                 document.getElementById('gpsStatus').innerText = `📍 GPS: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
-                const data = await res.json();
-                currentAddress = data.display_name || "មិនស្គាល់ទីតាំង";
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=km`);
+                    const data = await res.json();
+                    currentAddress = data.display_name || "មិនស្គាល់ទីតាំង";
+                } catch (e) { currentAddress = "រកមិនឃើញអាសយដ្ឋាន"; }
             }, null, { enableHighAccuracy: true });
-        } catch (e) { console.log("Hardware access denied"); }
+        }
     }
 
     function captureAndSave() {
-        if(lat === 0) return alert("រង់ចាំ GPS បន្តិច...");
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        if (!stream) return alert("កាមេរ៉ាមិនទាន់ដំណើរការ!");
+        if (lat === 0) return alert("រង់ចាំ GPS បន្តិច...");
+        
+        canvas.width = video.videoWidth; 
+        canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        const img = canvas.toDataURL('image/jpeg', 0.5);
+        const img = canvas.toDataURL('image/jpeg', 0.6);
         const now = new Date();
+        
         const tx = db.transaction("records", "readwrite");
         tx.objectStore("records").add({
             date: now.toLocaleDateString('km-KH'),
@@ -135,7 +161,7 @@
                 data = data.filter(i => i.date === formattedDate);
             }
             if (textQ) {
-                data = data.filter(i => i.address.toLowerCase().includes(textQ) || `ID-${i.id}`.toLowerCase().includes(textQ));
+                data = data.filter(i => i.address.toLowerCase().includes(textQ) || `id-${i.id}`.toLowerCase().includes(textQ));
             }
 
             data.reverse().forEach(item => {
@@ -143,11 +169,11 @@
                     <td><input type="checkbox" class="row-select" value="${item.id}"></td>
                     <td>ID-${item.id}</td>
                     <td>${item.date}<br>${item.time}</td>
-                    <td style="font-size:0.7rem;">${item.address}</td>
-                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" style="color:blue; font-size:0.7rem;">📍 Map</a></td>
+                    <td style="font-size:0.75rem;">${item.address}</td>
+                    <td><a href="https://www.google.com/maps?q=${item.gps}" target="_blank" style="color:blue; font-size:0.7rem;">📍 View Map</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
                     <td>
-                        <button onclick="openEdit(${item.id},'${item.address.replace(/'/g,"")}')">📝</button>
+                        <button onclick="openEdit(${item.id},'${item.address.replace(/'/g,"\\'")}')">📝</button>
                         <button style="background:var(--danger); color:white;" onclick="deleteSingle(${item.id})">🗑️</button>
                     </td>
                 </tr>`;
@@ -162,7 +188,7 @@
             const container = document.createElement('div');
             container.style.padding = "10px";
             container.innerHTML = `
-                <h3 style="text-align:center; font-family:'Kantumruy Pro';">របាយការណ៍សកម្មភាព</h3>
+                <h3 style="text-align:center; font-family:'Kantumruy Pro';">របាយការណ៍សកម្មភាពចុះវាល</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:9px; font-family:'Kantumruy Pro'; table-layout: fixed;">
                     <thead><tr style="background:#eee;">
                         <th style="border:1px solid #000; width:30px;">ID</th>
@@ -176,14 +202,14 @@
                             <tr>
                                 <td style="border:1px solid #000; text-align:center;">${i.id}</td>
                                 <td style="border:1px solid #000;">${i.date}<br>${i.time}</td>
-                                <td style="border:1px solid #000; word-wrap: break-word;">${i.address}</td>
+                                <td style="border:1px solid #000; word-wrap: break-word; padding: 5px;">${i.address}</td>
                                 <td style="border:1px solid #000; text-align:center;">${i.gps}</td>
-                                <td style="border:1px solid #000; text-align:center;"><img src="${i.image}" style="width:80px;"></td>
+                                <td style="border:1px solid #000; text-align:center;"><img src="${i.image}" style="width:80px; padding: 2px;"></td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>`;
-            html2pdf().set({ margin: 0.2, filename: 'Full_Report.pdf', jsPDF: { orientation: 'landscape' } }).from(container).save();
+            html2pdf().set({ margin: 0.2, filename: 'Report.pdf', jsPDF: { orientation: 'landscape' } }).from(container).save();
         };
     }
 
@@ -194,20 +220,20 @@
             {header:'ID', key:'id', width:8},
             {header:'ថ្ងៃទី', key:'date', width:15},
             {header:'ម៉ោង', key:'time', width:12},
-            {header:'អាសយដ្ឋាន', key:'address', width:50},
+            {header:'អាសយដ្ឋាន', key:'address', width:55},
             {header:'GPS Link', key:'gps', width:25}
         ];
         db.transaction("records").objectStore("records").getAll().onsuccess = async e => {
             const data = e.target.result.reverse();
             for(let i=0; i<data.length; i++) {
                 const r = data[i];
-                const row = ws.addRow({id:r.id, date:r.date, time:r.time, address:r.address, gps:r.gps});
-                row.getCell('gps').value = { text: '📍 '+r.gps, hyperlink: 'https://www.google.com/maps?q='+r.gps' + r.gps };
+                const row = ws.addRow({id: r.id, date: r.date, time: r.time, address: r.address, gps: r.gps});
+                row.getCell('gps').value = { text: '📍 '+r.gps, hyperlink: 'https://www.google.com/maps?q=' + r.gps };
                 const imgId = workbook.addImage({ base64: r.image, extension: 'jpeg' });
                 ws.addImage(imgId, { tl: { col: 5, row: i+1 }, ext: { width: 100, height: 75 } });
                 ws.getRow(i+2).height = 60;
             }
-            saveAs(new Blob([await workbook.xlsx.writeBuffer()]), "Report.xlsx");
+            saveAs(new Blob([await workbook.xlsx.writeBuffer()]), "Field_Report.xlsx");
         };
     }
 
@@ -224,11 +250,11 @@
     function deleteSingle(id) { if(confirm("លុប ID-"+id+"?")) db.transaction("records", "readwrite").objectStore("records").delete(id).onsuccess = () => loadTable(); }
     function toggleSelectAll() { const isChecked = document.getElementById('selectAll').checked; document.querySelectorAll('.row-select').forEach(cb => cb.checked = isChecked); }
     function deleteSelected() {
-        const s = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => parseInt(cb.value));
-        if(s.length === 0) return alert("សូមជ្រើសរើស!");
-        if(confirm("លុបទាំង "+s.length+"?")) {
+        const selectedIds = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => parseInt(cb.value));
+        if(selectedIds.length === 0) return alert("សូមជ្រើសរើស!");
+        if(confirm("លុបទាំង "+selectedIds.length+"?")) {
             const tx = db.transaction("records", "readwrite");
-            s.forEach(id => tx.objectStore("records").delete(id));
+            selectedIds.forEach(id => tx.objectStore("records").delete(id));
             tx.oncomplete = () => { loadTable(); document.getElementById('selectAll').checked = false; };
         }
     }
