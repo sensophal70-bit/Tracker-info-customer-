@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Full Options</title>
+    <title>Field Capture Pro - PDF with Table Borders</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -15,16 +15,19 @@
         
         body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f7; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         
+        /* Camera Section */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; margin-bottom: 20px; }
         video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid var(--primary); }
         
         .btn-capture { background: var(--success); color: white; width: 100%; font-size: 1.1rem; padding: 12px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Kantumruy Pro'; }
         
+        /* Tools Section */
         .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; }
         .tools input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; }
         #textSearch { flex: 2; min-width: 180px; }
         #dateSearch { flex: 1; min-width: 140px; }
 
+        /* Main Table Style */
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85rem; }
@@ -32,7 +35,7 @@
         
         .img-cell { width: 70px; height: 55px; object-fit: cover; border-radius: 4px; }
 
-        /* Modal Style */
+        /* Modal Edit */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; z-index: 1000; border-radius: 10px; width: 85%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
     </style>
@@ -64,7 +67,7 @@
         <h3 style="margin:0;">របាយការណ៍សកម្មភាព</h3>
         <div style="display:flex; gap:8px;">
             <button style="background:#1d6f42; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;" onclick="exportToExcel()">📊 Excel</button>
-            <button style="background:#ad0b00; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;" onclick="exportToPDF()">📄 PDF (Khmer)</button>
+            <button style="background:#ad0b00; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;" onclick="exportToPDF()">📄 PDF (មានបន្ទាត់)</button>
         </div>
     </div>
     <table id="dataTable">
@@ -87,7 +90,7 @@
 <div id="editModal" class="modal">
     <h4 style="margin-top:0;">កែសម្រួលអាសយដ្ឋាន</h4>
     <textarea id="editAddr" style="width:100%; height:100px; font-family:'Kantumruy Pro'; padding:8px; border:1px solid #ccc; border-radius:5px; box-sizing: border-box;"></textarea>
-    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; border:none; padding:10px; border-radius:5px; margin-top:10px; cursor:pointer; font-family:'Kantumruy Pro';">រក្សាទុកការកែប្រែ</button>
+    <button onclick="updateData()" style="background: var(--success); color:white; width:100%; border:none; padding:10px; border-radius:5px; margin-top:10px; cursor:pointer; font-family:'Kantumruy Pro';">រក្សាទុក</button>
 </div>
 
 <canvas id="hiddenCanvas" style="display:none;"></canvas>
@@ -149,7 +152,7 @@
                     <td>${item.id}</td>
                     <td>${item.date}<br>${item.time}</td>
                     <td style="font-size:0.75rem;">${item.address}</td>
-                    <td style="text-align:center;"><a href="http://googleusercontent.com/maps.google.com/7{item.gps}" target="_blank">📍</a></td>
+                    <td style="text-align:center;"><a href="https://www.google.com/maps?q=${item.gps}" target="_blank">📍</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
                     <td>
                         <button style="background:var(--primary); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;" onclick="openEdit(${item.id},'${item.address.replace(/'/g,"\\'")}')">📝</button>
@@ -160,45 +163,57 @@
         };
     }
 
-    // --- មុខងារ Edit ---
-    let editId;
-    function openEdit(id, address) {
-        editId = id;
-        document.getElementById('editAddr').value = address;
-        document.getElementById('editModal').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-    }
-    function closeModal() {
-        document.getElementById('editModal').style.display = 'none';
-        document.getElementById('overlay').style.display = 'none';
-    }
-    function updateData() {
-        const tx = db.transaction("records", "readwrite");
-        const store = tx.objectStore("records");
-        store.get(editId).onsuccess = e => {
-            const data = e.target.result;
-            data.address = document.getElementById('editAddr').value;
-            store.put(data);
-            tx.oncomplete = () => {
-                closeModal();
-                loadTable();
-            };
-        };
-    }
-
-    // PDF Khmer Fixed
+    // --- PDF Section ជាមួយការបន្ថែមបន្ទាត់តារាង ---
     async function exportToPDF() {
         const tx = db.transaction("records", "readonly");
         tx.objectStore("records").getAll().onsuccess = e => {
             const data = e.target.result;
             const pdfView = document.createElement('div');
+            
+            // CSS សម្រាប់តារាងក្នុង PDF (Border និង Striped Effect)
             pdfView.style.cssText = "font-family:'Kantumruy Pro'; padding:30px; width:1000px; background:white; color:black;";
-            pdfView.innerHTML = `<h2 style="text-align:center;">របាយការណ៍សកម្មភាពចុះវាល</h2>
-                <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <thead><tr style="background:#f2f2f2;"><th style="border:1px solid #333; padding:10px;">ID</th><th style="border:1px solid #333; padding:10px;">ថ្ងៃ/ម៉ោង</th><th style="border:1px solid #333; padding:10px;">អាសយដ្ឋាន</th><th style="border:1px solid #333; padding:10px;">GPS</th><th style="border:1px solid #333; padding:10px;">រូបភាព</th></tr></thead>
-                    <tbody>${data.reverse().map(i => `<tr><td style="border:1px solid #333; text-align:center;">${i.id}</td><td style="border:1px solid #333; padding:10px;">${i.date}<br>${i.time}</td><td style="border:1px solid #333; padding:10px;">${i.address}</td><td style="border:1px solid #333; text-align:center;">${i.gps}</td><td style="border:1px solid #333; text-align:center; padding:5px;"><img src="${i.image}" style="width:120px;"></td></tr>`).join('')}</tbody>
-                </table>`;
-            html2pdf().set({ margin: 0.3, filename: 'Report.pdf', html2canvas: { scale: 2, useCORS: true }, jsPDF: { format: 'a4', orientation: 'landscape' } }).from(pdfView).save();
+            
+            pdfView.innerHTML = `
+                <div style="text-align:center; margin-bottom: 20px;">
+                    <h2 style="margin:0;">របាយការណ៍សកម្មភាពចុះវាល</h2>
+                    <p>ថ្ងៃបញ្ចេញរបាយការណ៍៖ ${new Date().toLocaleDateString('km-KH')}</p>
+                </div>
+                <table style="width:100%; border-collapse:collapse; border: 2px solid #333;">
+                    <thead>
+                        <tr style="background:#004a99; color:white;">
+                            <th style="border: 1px solid #333; padding:12px; width:40px;">ល.រ</th>
+                            <th style="border: 1px solid #333; padding:12px; width:100px;">ថ្ងៃ/ម៉ោង</th>
+                            <th style="border: 1px solid #333; padding:12px;">អាសយដ្ឋាន/ទីតាំង</th>
+                            <th style="border: 1px solid #333; padding:12px; width:110px;">GPS</th>
+                            <th style="border: 1px solid #333; padding:12px; width:150px;">រូបភាពសកម្មភាព</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.reverse().map((i, index) => `
+                        <tr style="background: ${index % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
+                            <td style="border: 1px solid #333; text-align:center; padding:10px;">${i.id}</td>
+                            <td style="border: 1px solid #333; padding:10px;">${i.date}<br>${i.time}</td>
+                            <td style="border: 1px solid #333; padding:10px; line-height:1.4;">${i.address}</td>
+                            <td style="border: 1px solid #333; text-align:center; padding:10px;">${i.gps}</td>
+                            <td style="border: 1px solid #333; text-align:center; padding:8px;">
+                                <img src="${i.image}" style="width:130px; height:auto; border: 1px solid #ccc; border-radius:2px;">
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top:20px; text-align:right; font-size:12px;">
+                    <p>ហត្ថលេខាអ្នករាយការណ៍៖ __________________________</p>
+                </div>`;
+
+            const opt = {
+                margin: 0.3,
+                filename: 'Field_Report_with_Lines.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { format: 'a4', orientation: 'landscape' }
+            };
+            
+            html2pdf().set(opt).from(pdfView).save().then(() => pdfView.remove());
         };
     }
 
@@ -218,12 +233,12 @@
         };
     }
 
+    // Backup & Restore
     function backupData() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             saveAs(new Blob([JSON.stringify(e.target.result)], {type:"application/json"}), "Backup.json");
         };
     }
-
     function restoreData(event) {
         const reader = new FileReader();
         reader.onload = e => {
@@ -233,6 +248,29 @@
             tx.oncomplete = () => { alert("Restore រួចរាល់!"); loadTable(); };
         };
         reader.readAsText(event.target.files[0]);
+    }
+
+    // Edit Function
+    let editId;
+    function openEdit(id, address) {
+        editId = id;
+        document.getElementById('editAddr').value = address;
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+    }
+    function updateData() {
+        const tx = db.transaction("records", "readwrite");
+        const store = tx.objectStore("records");
+        store.get(editId).onsuccess = e => {
+            const data = e.target.result;
+            data.address = document.getElementById('editAddr').value;
+            store.put(data);
+            tx.oncomplete = () => { closeModal(); loadTable(); };
+        };
     }
 
     function deleteSingle(id) { if(confirm("លុប ID-"+id+"?")) db.transaction("records", "readwrite").objectStore("records").delete(id).onsuccess = () => loadTable(); }
