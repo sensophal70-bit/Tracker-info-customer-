@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Capture Pro - Search by Date</title>
+    <title>Field Capture Pro - GPS Link & Search</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -14,27 +14,26 @@
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #f39c12; }
         body { font-family: 'Kantumruy Pro', sans-serif; background: #f0f4f7; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        /* កាមេរ៉ា */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; margin-bottom: 20px; text-align: center; }
         video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; border: 2px solid var(--primary); }
         
-        /* ផ្នែក Search */
         .search-section { width: 100%; max-width: 1000px; background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
         .search-section input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Kantumruy Pro'; }
         #textSearch { flex: 2; min-width: 200px; }
-        #dateSearch { flex: 1; min-width: 150px; }
 
         button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Kantumruy Pro'; transition: 0.2s; }
         .btn-save { background: var(--success); color: white; font-size: 1.1rem; width: 100%; margin-top: 10px; }
         
-        /* តារាង */
         #reportArea { width: 100%; max-width: 1050px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 850px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: var(--primary); color: white; position: sticky; top: 0; }
         .img-cell { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
+        
+        /* Style សម្រាប់ Link GPS */
+        .gps-link { color: #007bff; text-decoration: none; font-weight: bold; font-size: 0.75rem; }
+        .gps-link:hover { text-decoration: underline; }
 
-        /* Modal */
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; box-shadow: 0 0 30px rgba(0,0,0,0.3); border-radius: 12px; z-index: 1000; width: 90%; max-width: 400px; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
     </style>
@@ -72,7 +71,7 @@
         <thead>
             <tr>
                 <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                <th>ID</th><th>ថ្ងៃទី</th><th>ម៉ោង</th><th>អាសយដ្ឋាន/តំបន់</th><th>រូបភាព</th><th>សកម្មភាព</th>
+                <th>ID</th><th>ថ្ងៃទី</th><th>ម៉ោង</th><th>អាសយដ្ឋាន/តំបន់</th><th>GPS (Link)</th><th>រូបភាព</th><th>សកម្មភាព</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -121,7 +120,7 @@
         const now = new Date();
         const tx = db.transaction("records", "readwrite");
         tx.objectStore("records").add({
-            date: now.toLocaleDateString('km-KH'), // រក្សាទុកជា ថ្ងៃ/ខែ/ឆ្នាំ
+            date: now.toLocaleDateString('km-KH'),
             time: now.toLocaleTimeString('km-KH'),
             address: currentAddress,
             gps: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
@@ -130,32 +129,30 @@
         tx.oncomplete = () => loadTable();
     }
 
-    // មុខងារ Search រួមបញ្ចូលគ្នា (Text + Date)
     function loadTable() {
         const textQ = document.getElementById('textSearch').value.toLowerCase();
-        const dateQ = document.getElementById('dateSearch').value; // ទម្រង់ YYYY-MM-DD
+        const dateQ = document.getElementById('dateSearch').value;
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
 
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             let data = e.target.result;
-
-            // ១. ស្វែងរកតាមអត្ថបទ
-            if (textQ) {
-                data = data.filter(i => i.address.toLowerCase().includes(textQ) || (`ID-${i.id}`).toLowerCase().includes(textQ));
-            }
-
-            // ២. ស្វែងរកតាមថ្ងៃខែ
+            if (textQ) data = data.filter(i => i.address.toLowerCase().includes(textQ) || (`ID-${i.id}`).toLowerCase().includes(textQ));
             if (dateQ) {
                 const [y, m, d] = dateQ.split('-');
-                const formattedDate = `${parseInt(d)}/${parseInt(m)}/${y}`; // បម្លែងទៅជាទម្រង់ថ្ងៃ/ខែ/ឆ្នាំ ខ្មែរ
+                const formattedDate = `${parseInt(d)}/${parseInt(m)}/${y}`;
                 data = data.filter(i => i.date === formattedDate);
             }
 
             data.reverse().forEach(item => {
+                // បង្កើត Link សម្រាប់ Google Maps
+                const mapUrl = `https://www.google.com/maps?q=${item.gps}`;
+                
                 tbody.innerHTML += `<tr>
                     <td><input type="checkbox" class="row-select" value="${item.id}"></td>
-                    <td>ID-${item.id}</td><td>${item.date}</td><td>${item.time}</td><td>${item.address}</td>
+                    <td>ID-${item.id}</td><td>${item.date}</td><td>${item.time}</td>
+                    <td>${item.address}</td>
+                    <td><a href="${mapUrl}" target="_blank" class="gps-link">📍 ${item.gps}</a></td>
                     <td><img src="${item.image}" class="img-cell"></td>
                     <td>
                         <button style="background:var(--warning); padding:5px;" onclick="openEdit(${item.id}, '${item.address.replace(/'/g, "\\'")}')">📝</button>
@@ -172,7 +169,6 @@
         loadTable();
     }
 
-    // Export PDF (ទាញយកទិន្នន័យទាំងអស់)
     async function exportToPDF() {
         db.transaction("records").objectStore("records").getAll().onsuccess = e => {
             const allData = e.target.result;
@@ -191,7 +187,7 @@
                         <th style="border:1px solid #333; padding:8px;">ថ្ងៃទី</th>
                         <th style="border:1px solid #333; padding:8px;">ម៉ោង</th>
                         <th style="border:1px solid #333; padding:8px;">អាសយដ្ឋាន</th>
-                        <th style="border:1px solid #333; padding:8px;">GPS</th>
+                        <th style="border:1px solid #333; padding:8px;">GPS Link</th>
                         <th style="border:1px solid #333; padding:8px;">រូបភាព</th>
                     </tr></thead>
                     <tbody>
@@ -201,7 +197,9 @@
                                 <td style="border:1px solid #333; padding:8px;">${item.date}</td>
                                 <td style="border:1px solid #333; padding:8px;">${item.time}</td>
                                 <td style="border:1px solid #333; padding:8px;">${item.address}</td>
-                                <td style="border:1px solid #333; padding:8px;">${item.gps}</td>
+                                <td style="border:1px solid #333; padding:8px;">
+                                    <a href="https://www.google.com/maps?q=${item.gps}" style="color:#007bff; text-decoration:none;">${item.gps}</a>
+                                </td>
                                 <td style="border:1px solid #333; padding:5px; text-align:center;">
                                     <img src="${item.image}" style="width:80px; height:60px; object-fit:cover;">
                                 </td>
@@ -210,7 +208,7 @@
                     </tbody>
                 </table>
             `;
-            html2pdf().set({ margin:0.3, filename:'Full_Report.pdf', image:{type:'jpeg', quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in', format:'a4', orientation:'landscape'} }).from(container).save();
+            html2pdf().set({ margin:0.3, filename:'Full_Report_GPS.pdf', image:{type:'jpeg', quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in', format:'a4', orientation:'landscape'} }).from(container).save();
         };
     }
 
@@ -221,7 +219,14 @@
         db.transaction("records").objectStore("records").getAll().onsuccess = async e => {
             const d = e.target.result;
             for(let i=0; i<d.length; i++) {
-                ws.addRow({id:`ID-${d[i].id}`, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
+                const row = ws.addRow({id:`ID-${d[i].id}`, date:d[i].date, time:d[i].time, address:d[i].address, gps:d[i].gps});
+                
+                // បន្ថែម Hyperlink ក្នុង Excel
+                row.getCell('gps').value = {
+                    text: d[i].gps,
+                    hyperlink: `https://www.google.com/maps?q=${d[i].gps}`
+                };
+
                 const imgId = workbook.addImage({ base64: d[i].image, extension: 'jpeg' });
                 ws.addImage(imgId, { tl: { col: 5, row: i+1 }, ext: { width: 100, height: 75 } });
                 ws.getRow(i+2).height = 60;
@@ -230,7 +235,6 @@
         };
     }
 
-    // មុខងារដទៃទៀត (Edit, Delete, Select)
     function openEdit(id, addr) { document.getElementById('editId').value = id; document.getElementById('editAddr').value = addr; document.getElementById('editModal').style.display = 'block'; document.getElementById('overlay').style.display = 'block'; }
     function closeModal() { document.getElementById('editModal').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
     function updateData() {
